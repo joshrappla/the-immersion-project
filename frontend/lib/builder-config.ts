@@ -5,7 +5,7 @@ import Timeline from '@/components/Timeline';
 builder.init(process.env.NEXT_PUBLIC_BUILDER_API_KEY!);
 
 // Register Timeline as a draggable component in Builder.io
-Builder.registerComponent(Timeline, {
+builder.registerComponent(Timeline, {
   name: 'Timeline',
   inputs: [
     {
