@@ -52,6 +52,23 @@
             font-size: 12px;
         }
 
+        .admin-btn {
+            padding: 6px 15px;
+            border-radius: 6px;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .admin-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
         .music-control {
             position: fixed;
             bottom: 20px;
@@ -76,7 +93,7 @@
         .zoom-controls {
             position: fixed;
             bottom: 20px;
-            right: 20px;
+            left: 90px;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -363,6 +380,7 @@
             <select id="timePeriodFilter">
                 <option value="">All Periods</option>
             </select>
+            <button class="admin-btn" onclick="window.location.href='admin-panel.html'">Admin</button>
         </div>
     </div>
 
