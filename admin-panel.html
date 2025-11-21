@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - The Immersion Project</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        /* Login Section */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-container h2 {
+            color: #667eea;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .login-form input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            color: #ff4444;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: none;
+        }
+
+        .main-content.active {
+            display: block;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        /* Form Card */
+        .form-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-card h2 {
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Media List */
+        .media-list {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-height: 800px;
+            overflow-y: auto;
+        }
+
+        .media-list h2 {
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+
+        .media-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .media-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .media-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .media-item-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .media-item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            width: 35px;
+            height: 35px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .icon-btn.edit {
+            background: #4ECDC4;
+            color: white;
+        }
+
+        .icon-btn.delete {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .media-item-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .media-item-description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Loading & Messages */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        /* Logout */
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Section -->
+    <div class="login-container" id="loginContainer">
+        <h2>🔐 Admin Login</h2>
+        <form class="login-form" id="loginForm">
+            <input type="password" id="passwordInput" placeholder="Enter admin password" required>
+            <button type="submit" class="login-btn">Login</button>
+        </form>
+        <div class="error-message" id="loginError">Incorrect password</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+        
+        <div class="container">
+            <!-- Header -->
+            <div class="header">
+                <h1>🎬 Admin Panel</h1>
+                <p>Manage media items for The Immersion Project</p>
+            </div>
+
+            <!-- Messages -->
+            <div class="message" id="successMessage"></div>
+            <div class="message error" id="errorMessage"></div>
+
+            <!-- Grid Layout -->
+            <div class="grid">
+                <!-- Form Card -->
+                <div class="form-card">
+                    <h2 id="formTitle">Add New Media</h2>
+                    <form id="mediaForm">
+                        <input type="hidden" id="editMediaId">
+                        
+                        <div class="form-group">
+                            <label>Title *</label>
+                            <input type="text" id="title" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Media Type *</label>
+                            <select id="mediaType" required>
+                                <option value="">Select type...</option>
+                                <option value="movie">Movie</option>
+                                <option value="tv">TV Show</option>
+                                <option value="game">Video Game</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Time Period *</label>
+                            <input type="text" id="timePeriod" placeholder="e.g., Ancient Rome, Renaissance" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Start Year *</label>
+                            <input type="number" id="startYear" placeholder="e.g., 1999 or -500 for BC" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>End Year *</label>
+                            <input type="number" id="endYear" placeholder="e.g., 2023" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description *</label>
+                            <textarea id="description" placeholder="Brief description of the media" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Image URL *</label>
+                            <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Streaming URL *</label>
+                            <input type="url" id="streamingUrl" placeholder="https://netflix.com or https://store.steampowered.com" required>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="submitBtn">Add Media</button>
+                            <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Media List -->
+                <div class="media-list">
+                    <h2>Existing Media Items</h2>
+                    <div id="mediaListContainer">
+                        <div class="loading">Loading media items...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const ADMIN_PASSWORD = 'immersion2024'; // Change this to your desired password
+        const API_URL = 'https://p3cf32ynjf.execute-api.us-east-2.amazonaws.com/prod';
+        const MEDIA_ENDPOINT = `${API_URL}/media`;
+        const ADMIN_ENDPOINT = `${API_URL}/admin`;
+
+        let isEditMode = false;
+        let currentEditId = null;
+
+        // Authentication
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const password = document.getElementById('passwordInput').value;
+            
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('mainContent').classList.add('active');
+                loadMediaItems();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('mainContent').classList.remove('active');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('loginError').style.display = 'none';
+        });
+
+        // Load all media items
+        async function loadMediaItems() {
+            try {
+                const response = await fetch(MEDIA_ENDPOINT);
+                const data = await response.json();
+                displayMediaItems(data.items);
+            } catch (error) {
+                console.error('Error loading media:', error);
+                showError('Failed to load media items');
+            }
+        }
+
+        // Display media items
+        function displayMediaItems(items) {
+            const container = document.getElementById('mediaListContainer');
+            
+            if (items.length === 0) {
+                container.innerHTML = '<div class="loading">No media items yet</div>';
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div class="media-item">
+                    <div class="media-item-header">
+                        <div class="media-item-title">${item.title}</div>
+                        <div class="media-item-actions">
+                            <button class="icon-btn edit" onclick="editMedia('${item.mediaId}')">✏️</button>
+                            <button class="icon-btn delete" onclick="deleteMedia('${item.mediaId}')">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="media-item-meta">
+                        <span class="badge">${item.mediaType.toUpperCase()}</span>
+                        <span class="badge">${item.timePeriod}</span>
+                        <span class="badge">${item.startYear} - ${item.endYear}</span>
+                    </div>
+                    <div class="media-item-description">${item.description}</div>
+                </div>
+            `).join('');
+        }
+
+        // Form submission
+        document.getElementById('mediaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('title').value,
+                mediaType: document.getElementById('mediaType').value,
+                timePeriod: document.getElementById('timePeriod').value,
+                startYear: parseInt(document.getElementById('startYear').value),
+                endYear: parseInt(document.getElementById('endYear').value),
+                description: document.getElementById('description').value,
+                imageUrl: document.getElementById('imageUrl').value,
+                streamingUrl: document.getElementById('streamingUrl').value
+            };
+
+            if (isEditMode) {
+                formData.mediaId = currentEditId;
+                await updateMedia(formData);
+            } else {
+                await createMedia(formData);
+            }
+        });
+
+        // Create media
+        async function createMedia(data) {
+            try {
+                const response = await fetch(ADMIN_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showSuccess('Media item created successfully!');
+                    resetForm();
+                    loadMediaItems();
+                } else {
+                    throw new Error('Failed to create media');
+                }
+            } catch (error) {
+                console.error('Error creating media:', error);
+                showError('Failed to create media item');
+            }
+        }
+
+        // Update media
+        async function updateMedia(data) {
+            try {
+                const response = await fetch(ADMIN_ENDPOINT, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showSuccess('Media item updated successfully!');
+                    resetForm();
+                    loadMediaItems();
+                } else {
+                    throw new Error('Failed to update media');
+                }
+            } catch (error) {
+                console.error('Error updating media:', error);
+                showError('Failed to update media item');
+            }
+        }
+
+        // Edit media
+        async function editMedia(mediaId) {
+            try {
+                const response = await fetch(MEDIA_ENDPOINT);
+                const data = await response.json();
+                const item = data.items.find(i => i.mediaId === mediaId);
+                
+                if (item) {
+                    isEditMode = true;
+                    currentEditId = mediaId;
+                    
+                    document.getElementById('formTitle').textContent = 'Edit Media';
+                    document.getElementById('submitBtn').textContent = 'Update Media';
+                    document.getElementById('editMediaId').value = mediaId;
+                    
+                    document.getElementById('title').value = item.title;
+                    document.getElementById('mediaType').value = item.mediaType;
+                    document.getElementById('timePeriod').value = item.timePeriod;
+                    document.getElementById('startYear').value = item.startYear;
+                    document.getElementById('endYear').value = item.endYear;
+                    document.getElementById('description').value = item.description;
+                    document.getElementById('imageUrl').value = item.imageUrl;
+                    document.getElementById('streamingUrl').value = item.streamingUrl;
+                    
+                    // Scroll to form
+                    document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
+                }
+            } catch (error) {
+                console.error('Error loading media for edit:', error);
+                showError('Failed to load media item');
+            }
+        }
+
+        // Delete media
+        async function deleteMedia(mediaId) {
+            if (!confirm('Are you sure you want to delete this media item?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(ADMIN_ENDPOINT, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ mediaId })
+                });
+
+                if (response.ok) {
+                    showSuccess('Media item deleted successfully!');
+                    loadMediaItems();
+                } else {
+                    throw new Error('Failed to delete media');
+                }
+            } catch (error) {
+                console.error('Error deleting media:', error);
+                showError('Failed to delete media item');
+            }
+        }
+
+        // Cancel/Reset form
+        document.getElementById('cancelBtn').addEventListener('click', resetForm);
+
+        function resetForm() {
+            isEditMode = false;
+            currentEditId = null;
+            
+            document.getElementById('formTitle').textContent = 'Add New Media';
+            document.getElementById('submitBtn').textContent = 'Add Media';
+            document.getElementById('mediaForm').reset();
+            document.getElementById('editMediaId').value = '';
+        }
+
+        // Show messages
+        function showSuccess(message) {
+            const el = document.getElementById('successMessage');
+            el.textContent = message;
+            el.className = 'message success show';
+            setTimeout(() => el.classList.remove('show'), 5000);
+        }
+
+        function showError(message) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = message;
+            el.className = 'message error show';
+            setTimeout(() => el.classList.remove('show'), 5000);
+        }
+    </script>
+</body>
+</html>

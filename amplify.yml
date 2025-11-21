@@ -1,18 +1,10 @@
 version: 1
 frontend:
   phases:
-    preBuild:
-      commands:
-        - cd frontend
-        - npm ci --cache .npm --prefer-offline
     build:
       commands:
-        - npm run build
+        - echo "No build required for static HTML"
   artifacts:
-    baseDirectory: frontend/out
+    baseDirectory: /
     files:
       - '**/*'
-  cache:
-    paths:
-      - frontend/.npm/**/*
-      - frontend/node_modules/**/*
