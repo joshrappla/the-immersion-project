@@ -415,15 +415,32 @@
 
     <div class="loading" id="loading">Loading timeline...</div>
 
-    <audio id="bgMusic" loop>
-        <source src="https://www.bensound.com/bensound-music/bensound-epic.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="bgMusic" loop></audio>
 
     <script>
         const API_URL = 'https://p3cf32ynjf.execute-api.us-east-2.amazonaws.com/prod/media';
+        
+        // Music mapping by time period (using Pixabay free royalty-free music)
+        const musicByPeriod = {
+            'Ancient Greece': 'https://cdn.pixabay.com/audio/2023/11/29/audio_5dcdc2c23b.mp3', // Greek lyre music
+            'Ancient Rome': 'https://cdn.pixabay.com/audio/2023/12/06/audio_54f8c46be4.mp3', // Roman orchestral
+            'Viking Age': 'https://cdn.pixabay.com/audio/2023/02/28/audio_2f2fc7eda9.mp3', // Viking Norse background
+            'Third Crusade': 'https://cdn.pixabay.com/audio/2023/11/27/audio_9b9afc0e9e.mp3', // Medieval battle
+            'Renaissance': 'https://cdn.pixabay.com/audio/2023/06/08/audio_5e2bdaf0fb.mp3', // Renaissance strings
+            'Meiji Restoration': 'https://cdn.pixabay.com/audio/2023/10/29/audio_3e79976610.mp3', // Japanese traditional
+            'Wild West': 'https://cdn.pixabay.com/audio/2023/10/08/audio_8fc0ec2cd6.mp3', // Western cowboy
+            'Post-WWI': 'https://cdn.pixabay.com/audio/2023/04/12/audio_3e28c7e8bb.mp3' // 1920s Jazz
+        };
+        
+        // Default ambient music
+        const defaultMusic = 'https://cdn.pixabay.com/audio/2022/09/05/audio_d1718ab41b.mp3'; // Epic cinematic
+        
         let allMediaItems = [];
         let currentMediaUrl = '';
         let zoomLevel = 1;
+        let currentPeriod = '';
+        let musicElement = document.getElementById('bgMusic');
+        let isMusicPlaying = false;
 
         document.addEventListener('DOMContentLoaded', async () => {
             await loadMediaItems();
@@ -495,6 +512,35 @@
             });
         }
 
+        function switchMusic(period) {
+            const musicUrl = musicByPeriod[period] || defaultMusic;
+            
+            // Only switch if the music has changed
+            if (musicElement.src !== musicUrl) {
+                const wasPlaying = !musicElement.paused;
+                musicElement.src = musicUrl;
+                
+                if (wasPlaying) {
+                    musicElement.play().catch(err => console.log('Music playback prevented:', err));
+                }
+            }
+            
+            currentPeriod = period;
+        }
+
+        function onTimePeriodChange() {
+            const selectedPeriod = document.getElementById('timePeriodFilter').value;
+            
+            if (selectedPeriod) {
+                switchMusic(selectedPeriod);
+            } else {
+                // No filter selected, use default music
+                switchMusic('');
+            }
+            
+            renderTimeline();
+        }
+
         function showMediaDetail(item) {
             const overlay = document.getElementById('mediaDetailOverlay');
             overlay.classList.add('show');
@@ -521,7 +567,7 @@
 
         function setupEventListeners() {
             document.getElementById('mediaTypeFilter').addEventListener('change', renderTimeline);
-            document.getElementById('timePeriodFilter').addEventListener('change', renderTimeline);
+            document.getElementById('timePeriodFilter').addEventListener('change', onTimePeriodChange);
             document.getElementById('closeBtn').addEventListener('click', hideMediaDetail);
             document.getElementById('mediaDetailOverlay').addEventListener('click', (e) => {
                 if (e.target.id === 'mediaDetailOverlay') hideMediaDetail();
@@ -530,18 +576,25 @@
                 if (currentMediaUrl) window.open(currentMediaUrl, '_blank');
             });
 
-            const music = document.getElementById('bgMusic');
+            // Music controls with dynamic switching
             const musicBtn = document.getElementById('musicBtn');
-            let isPlaying = false;
+            
+            // Set initial music
+            musicElement.src = defaultMusic;
+            
             musicBtn.addEventListener('click', () => {
-                if (isPlaying) {
-                    music.pause();
+                if (isMusicPlaying) {
+                    musicElement.pause();
                     musicBtn.textContent = '🔇';
+                    isMusicPlaying = false;
                 } else {
-                    music.play();
+                    musicElement.play().catch(err => {
+                        console.log('Music playback prevented:', err);
+                        // Browser might block autoplay, user needs to interact first
+                    });
                     musicBtn.textContent = '🔊';
+                    isMusicPlaying = true;
                 }
-                isPlaying = !isPlaying;
             });
 
             document.getElementById('zoomInBtn').addEventListener('click', () => {
