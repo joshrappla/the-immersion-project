@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 
 interface MediaItem {
@@ -22,27 +22,49 @@ interface Era {
   color: string;
 }
 
+// Generate starfield once
+const generateStarfield = (count: number) => {
+  return Array.from({ length: count }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    opacity: Math.random() * 0.7 + 0.3,
+    delay: Math.random() * 3,
+    duration: Math.random() * 2 + 2,
+  }));
+};
+
 export default function HorizontalTimeline() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [mediaTypeFilter, setMediaTypeFilter] = useState('');
   const [eraFilter, setEraFilter] = useState('');
   const [loading, setLoading] = useState(true);
-  const [scrollPosition, setScrollPosition] = useState(0);
   const timelineRef = useRef<HTMLDivElement>(null);
+
+  // Stable starfield
+  const stars = useMemo(() => generateStarfield(200), []);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  // Define eras with colors
-  const eras: Era[] = [
-    { name: 'Ancient Period', startYear: -500, endYear: 500, color: '#1e1b4b' }, // deep purple
-    { name: 'Medieval Period', startYear: 500, endYear: 1500, color: '#1e293b' }, // dark blue-gray
-    { name: 'Viking Age', startYear: 793, endYear: 1066, color: '#064e3b' }, // dark teal
-    { name: 'The Crusades', startYear: 1095, endYear: 1291, color: '#134e4a' }, // teal
-    { name: 'Renaissance', startYear: 1400, endYear: 1650, color: '#422006' }, // brown
-    { name: 'Industrial Age', startYear: 1760, endYear: 1900, color: '#0f766e' }, // teal
-    { name: 'Modern Era', startYear: 1900, endYear: 2000, color: '#7f1d1d' }, // dark red
-  ];
+  // Predefined era colors
+  const eraColors: { [key: string]: string } = {
+    'Ancient Period': '#1e1b4b',
+    'Ancient Rome': '#1e1b4b',
+    'Ancient Greece': '#1e1b4b',
+    'Medieval Period': '#1e293b',
+    'Viking Age': '#064e3b',
+    'The Crusades': '#134e4a',
+    'Third Crusade': '#134e4a',
+    'Renaissance': '#422006',
+    'Italian Renaissance': '#422006',
+    'Meiji Restoration': '#0f766e',
+    'Industrial Age': '#0f766e',
+    'Modern Era': '#7f1d1d',
+    'Wild West': '#78350f',
+    'Post-WWI': '#7f1d1d',
+    'American Revolution': '#1e40af',
+  };
 
   // Fetch media items
   useEffect(() => {
@@ -66,12 +88,49 @@ export default function HorizontalTimeline() {
   });
 
   // Get unique eras from data
-  const uniqueEras = [...new Set(mediaItems.map(item => item.timePeriod))];
+  const uniqueEras = [...new Set(mediaItems.map(item => item.timePeriod))].sort();
 
-  // Convert year to pixel position (scale: 1 year = 1 pixel, offset for negative years)
+  // Calculate dynamic era range from actual data
+  const eraRanges = useMemo(() => {
+    const ranges: { [key: string]: { min: number; max: number } } = {};
+    
+    mediaItems.forEach(item => {
+      if (!ranges[item.timePeriod]) {
+        ranges[item.timePeriod] = {
+          min: item.startYear,
+          max: item.endYear,
+        };
+      } else {
+        ranges[item.timePeriod].min = Math.min(ranges[item.timePeriod].min, item.startYear);
+        ranges[item.timePeriod].max = Math.max(ranges[item.timePeriod].max, item.endYear);
+      }
+    });
+    
+    return ranges;
+  }, [mediaItems]);
+
+  // Calculate year range based on filter
+  let minYear: number;
+  let maxYear: number;
+  let isZoomed = false;
+
+  if (eraFilter && eraRanges[eraFilter]) {
+    // Zoom into selected era with some padding
+    const padding = 50; // Add 50 years padding on each side
+    minYear = eraRanges[eraFilter].min - padding;
+    maxYear = eraRanges[eraFilter].max + padding;
+    isZoomed = true;
+  } else {
+    // Show full timeline
+    minYear = -500;
+    maxYear = 2000;
+  }
+
+  const yearRange = maxYear - minYear;
+
+  // Convert year to pixel position
   const yearToPixel = (year: number) => {
-    const minYear = -500;
-    const pixelsPerYear = 2; // 2 pixels per year for better spacing
+    const pixelsPerYear = isZoomed ? 8 : 2; // 8x zoom when era is selected
     return (year - minYear) * pixelsPerYear;
   };
 
@@ -86,13 +145,31 @@ export default function HorizontalTimeline() {
     }
   };
 
+  // Auto-scroll to show filtered content
+  useEffect(() => {
+    if (eraFilter && eraRanges[eraFilter] && timelineRef.current) {
+      const eraRange = eraRanges[eraFilter];
+      const centerYear = (eraRange.min + eraRange.max) / 2;
+      const centerPosition = yearToPixel(centerYear);
+      setTimeout(() => {
+        if (timelineRef.current) {
+          timelineRef.current.scrollLeft = centerPosition - (timelineRef.current.clientWidth / 2);
+        }
+      }, 100);
+    }
+  }, [eraFilter]);
+
   const getMediaColor = (type: string) => {
     switch (type.toLowerCase()) {
-      case 'game': return '#10b981'; // green
-      case 'movie': return '#a855f7'; // purple
-      case 'tv': return '#3b82f6'; // blue
+      case 'game': return '#10b981';
+      case 'movie': return '#a855f7';
+      case 'tv': return '#3b82f6';
       default: return '#6b7280';
     }
+  };
+
+  const getEraColor = (eraName: string) => {
+    return eraColors[eraName] || '#1e293b'; // Default dark color
   };
 
   if (loading) {
@@ -103,20 +180,30 @@ export default function HorizontalTimeline() {
     );
   }
 
+  // Build display eras from actual data
+  const displayEras: Era[] = uniqueEras
+    .filter(eraName => !eraFilter || eraName === eraFilter)
+    .map(eraName => ({
+      name: eraName,
+      startYear: eraRanges[eraName].min,
+      endYear: eraRanges[eraName].max,
+      color: getEraColor(eraName),
+    }));
+
   return (
     <div className="relative min-h-screen bg-black overflow-hidden">
       {/* Starfield Background */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(200)].map((_, i) => (
+        {stars.map((star) => (
           <div
-            key={i}
+            key={star.id}
             className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              opacity: Math.random() * 0.7 + 0.3,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${Math.random() * 2 + 2}s`,
+              left: `${star.left}%`,
+              top: `${star.top}%`,
+              opacity: star.opacity,
+              animationDelay: `${star.delay}s`,
+              animationDuration: `${star.duration}s`,
             }}
           />
         ))}
@@ -172,18 +259,21 @@ export default function HorizontalTimeline() {
       <div className="relative h-[calc(100vh-180px)]">
         {/* Era Labels */}
         <div className="absolute top-4 left-0 right-0 z-20 flex px-20">
-          {eras.map((era) => (
-            <div
-              key={era.name}
-              className="flex flex-col items-center"
-              style={{
-                width: `${yearToPixel(era.endYear) - yearToPixel(era.startYear)}px`,
-              }}
-            >
-              <div className="text-xs font-semibold text-teal-400 mb-1">{era.name}</div>
-              <div className="text-xs text-gray-500">{era.startYear} - {era.endYear}</div>
-            </div>
-          ))}
+          {displayEras.map((era) => {
+            const eraWidth = yearToPixel(era.endYear) - yearToPixel(era.startYear);
+            return (
+              <div
+                key={era.name}
+                className="flex flex-col items-center"
+                style={{
+                  width: `${eraWidth}px`,
+                }}
+              >
+                <div className="text-xs font-semibold text-teal-400 mb-1 whitespace-nowrap">{era.name}</div>
+                <div className="text-xs text-gray-500">{era.startYear} - {era.endYear}</div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Scrollable Timeline */}
@@ -192,9 +282,9 @@ export default function HorizontalTimeline() {
           className="absolute top-20 left-0 right-0 bottom-0 overflow-x-auto overflow-y-hidden"
           style={{ scrollbarWidth: 'thin' }}
         >
-          <div className="relative h-full" style={{ width: `${yearToPixel(2000)}px` }}>
+          <div className="relative h-full" style={{ width: `${yearToPixel(maxYear)}px`, minWidth: '100%' }}>
             {/* Era Background Bands */}
-            {eras.map((era) => (
+            {displayEras.map((era) => (
               <div
                 key={era.name}
                 className="absolute top-0 bottom-0"
@@ -210,8 +300,9 @@ export default function HorizontalTimeline() {
             <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/20" />
 
             {/* Year Markers */}
-            {Array.from({ length: 26 }, (_, i) => {
-              const year = (i - 5) * 100; // -500 to 2000 in 100-year increments
+            {Array.from({ length: Math.ceil(yearRange / 100) + 1 }, (_, i) => {
+              const year = Math.ceil(minYear / 100) * 100 + (i * 100); // Round to nearest 100
+              if (year > maxYear) return null;
               return (
                 <div
                   key={year}
@@ -232,25 +323,31 @@ export default function HorizontalTimeline() {
               return (
                 <div
                   key={item.mediaId}
-                  className="absolute top-1/2 transform -translate-y-1/2 cursor-pointer group"
+                  className="absolute top-1/2 transform -translate-x-1/2"
                   style={{ left: `${position}px` }}
-                  onClick={() => setSelectedItem(item)}
                 >
+                  {/* Title above the timeline */}
                   <div
-                    className="relative px-4 py-2 rounded-full text-sm font-medium text-white border-2 whitespace-nowrap shadow-lg hover:scale-110 transition-transform"
-                    style={{
-                      backgroundColor: `${color}40`,
-                      borderColor: color,
-                      boxShadow: `0 0 20px ${color}80`,
-                    }}
+                    className="absolute bottom-8 left-1/2 transform -translate-x-1/2 cursor-pointer group"
+                    onClick={() => setSelectedItem(item)}
                   >
-                    {item.title}
+                    <div
+                      className="px-4 py-2 rounded-full text-sm font-medium text-white border-2 whitespace-nowrap shadow-lg hover:scale-110 transition-transform"
+                      style={{
+                        backgroundColor: `${color}40`,
+                        borderColor: color,
+                        boxShadow: `0 0 20px ${color}80`,
+                      }}
+                    >
+                      {item.title}
+                    </div>
                   </div>
                   
-                  {/* Connector Dot */}
+                  {/* Connector Dot on timeline */}
                   <div
-                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full"
-                    style={{ backgroundColor: color }}
+                    className="w-4 h-4 rounded-full cursor-pointer hover:scale-150 transition-transform"
+                    style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}` }}
+                    onClick={() => setSelectedItem(item)}
                   />
                 </div>
               );
@@ -283,24 +380,30 @@ export default function HorizontalTimeline() {
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#10b981]" />
-            <span className="text-sm text-gray-400">Games</span>
+            <span className="text-sm text-gray-300">Games</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#a855f7]" />
-            <span className="text-sm text-gray-400">Movies</span>
+            <span className="text-sm text-gray-300">Movies</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#3b82f6]" />
-            <span className="text-sm text-gray-400">TV Shows</span>
+            <span className="text-sm text-gray-300">TV Shows</span>
           </div>
         </div>
 
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-gray-300">
           <span className="opacity-75">✨ Journey through time</span>
           <span className="mx-3">•</span>
           <span>Use arrow buttons to scroll</span>
           <span className="mx-3">•</span>
           <span>Click media to explore</span>
+          {eraFilter && (
+            <>
+              <span className="mx-3">•</span>
+              <span className="text-teal-400">Viewing: {eraFilter}</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -317,7 +420,7 @@ export default function HorizontalTimeline() {
             {/* Close Button */}
             <button
               onClick={() => setSelectedItem(null)}
-              className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition"
+              className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition z-10"
             >
               ✕
             </button>
