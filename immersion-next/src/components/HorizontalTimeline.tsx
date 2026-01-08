@@ -49,6 +49,7 @@ export default function HorizontalTimeline() {
   const [mounted, setMounted] = useState(false); // Fix hydration error
   const [showContributeModal, setShowContributeModal] = useState(false);
   const [contributeTab, setContributeTab] = useState<'media' | 'feedback'>('media');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
 
   // Stable starfield - only generate on client
@@ -280,21 +281,23 @@ export default function HorizontalTimeline() {
       )}
 
       {/* Header */}
-      <div className="relative z-50 flex items-center justify-between p-6 bg-black/50 backdrop-blur-sm border-b border-white/10">
+      <div className="relative z-50 flex items-center justify-between p-4 md:p-6 bg-black/50 backdrop-blur-sm border-b border-white/10">
+        {/* Logo - Always Visible */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <div>
+          <div className="hidden sm:block">
             <h1 className="text-white font-bold text-lg">Historical Timeline</h1>
             <p className="text-gray-400 text-xs">Explore history through immersive media</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Buy Me a Coffee Button - Custom Styled to Match */}
+        {/* Desktop Navigation - Hidden on Mobile */}
+        <div className="hidden lg:flex items-center gap-4">
+          {/* Buy Me a Coffee Button */}
           <a 
             href="https://www.buymeacoffee.com/joshrapp" 
             target="_blank"
@@ -371,7 +374,158 @@ export default function HorizontalTimeline() {
             Admin
           </Link>
         </div>
+
+        {/* Mobile Hamburger Button - Visible on Mobile Only */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="lg:hidden w-10 h-10 flex items-center justify-center bg-gray-800 rounded-lg border border-gray-700 text-white hover:bg-gray-700 transition"
+          aria-label="Menu"
+        >
+          {mobileMenuOpen ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
       </div>
+
+      {/* Mobile Menu Drawer */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div
+            className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-gray-900 border-l border-gray-700 overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Mobile Menu Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+              <h2 className="text-white font-bold text-lg">Menu</h2>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Mobile Menu Items */}
+            <div className="p-6 space-y-6">
+              {/* Buy Me a Coffee */}
+              <a 
+                href="https://www.buymeacoffee.com/joshrapp" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 w-full p-4 bg-gray-800 text-white rounded-lg border border-gray-700 hover:bg-gray-700 transition"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.9 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/>
+                </svg>
+                <span className="font-semibold">Buy me a coffee</span>
+              </a>
+
+              {/* Contribute */}
+              <button
+                onClick={() => {
+                  setShowContributeModal(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-3 w-full p-4 bg-gray-800 text-white rounded-lg border border-gray-700 hover:bg-gray-700 transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="font-semibold">Contribute</span>
+              </button>
+
+              {/* Divider */}
+              <div className="border-t border-gray-700"></div>
+
+              {/* Media Type Filter */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-2">Media Type</label>
+                <select
+                  value={mediaTypeFilter}
+                  onChange={(e) => setMediaTypeFilter(e.target.value)}
+                  className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg border border-gray-700 text-base"
+                >
+                  <option value="">All Media Types</option>
+                  <option value="game">Games</option>
+                  <option value="movie">Movies</option>
+                  <option value="tv">TV Shows</option>
+                </select>
+              </div>
+
+              {/* Era Filter */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-2">Era</label>
+                <select
+                  value={eraFilter}
+                  onChange={(e) => setEraFilter(e.target.value)}
+                  className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg border border-gray-700 text-base"
+                >
+                  <option value="">All Eras</option>
+                  {uniqueEras.map((era) => (
+                    <option key={era} value={era}>{era}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Zoom Controls */}
+              <div>
+                <label className="block text-sm font-semibold text-white mb-2">Zoom</label>
+                <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
+                  <button
+                    onClick={() => setZoomLevel(prev => Math.max(0.5, prev * 0.8))}
+                    className="w-10 h-10 flex items-center justify-center text-white hover:text-teal-400 transition"
+                    title="Zoom Out"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
+                    </svg>
+                  </button>
+                  <span className="flex-1 text-center text-base text-gray-300 font-semibold">
+                    {Math.round(zoomLevel * 50)}%
+                  </span>
+                  <button
+                    onClick={() => setZoomLevel(prev => Math.min(20, prev * 1.25))}
+                    className="w-10 h-10 flex items-center justify-center text-white hover:text-teal-400 transition"
+                    title="Zoom In"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-gray-700"></div>
+
+              {/* Admin Link */}
+              <Link
+                href="/admin"
+                className="flex items-center gap-3 w-full p-4 bg-gray-800 text-white rounded-lg border border-gray-700 hover:bg-gray-700 transition"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="font-semibold">Admin</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Timeline Container */}
       <div className="relative h-[calc(100vh-180px)]">
@@ -514,50 +668,52 @@ export default function HorizontalTimeline() {
           </div>
         </div>
 
-        {/* Navigation Arrows */}
+        {/* Navigation Arrows - Larger on Mobile */}
         <button
           onClick={() => scroll('left')}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 w-12 h-12 bg-gray-800/80 hover:bg-gray-700 text-white rounded-full flex items-center justify-center border border-gray-600 transition"
+          className="absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 z-30 w-14 h-14 md:w-12 md:h-12 bg-gray-800/90 hover:bg-gray-700 text-white rounded-full flex items-center justify-center border border-gray-600 transition shadow-lg"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-7 h-7 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
 
         <button
           onClick={() => scroll('right')}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 w-12 h-12 bg-gray-800/80 hover:bg-gray-700 text-white rounded-full flex items-center justify-center border border-gray-600 transition"
+          className="absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 z-30 w-14 h-14 md:w-12 md:h-12 bg-gray-800/90 hover:bg-gray-700 text-white rounded-full flex items-center justify-center border border-gray-600 transition shadow-lg"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-7 h-7 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
       </div>
 
-      {/* Bottom Legend */}
-      <div className="relative z-50 flex items-center justify-between p-4 bg-black/50 backdrop-blur-sm border-t border-white/10">
-        <div className="flex items-center gap-6">
+      {/* Bottom Legend - Responsive */}
+      <div className="relative z-50 flex flex-col md:flex-row items-center justify-between p-3 md:p-4 bg-black/50 backdrop-blur-sm border-t border-white/10 gap-3 md:gap-0">
+        {/* Color Legend - Hide text on mobile */}
+        <div className="flex items-center gap-3 md:gap-6">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#10b981]" />
-            <span className="text-sm text-gray-300">Games</span>
+            <span className="text-xs md:text-sm text-gray-300">Games</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#a855f7]" />
-            <span className="text-sm text-gray-300">Movies</span>
+            <span className="text-xs md:text-sm text-gray-300">Movies</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#3b82f6]" />
-            <span className="text-sm text-gray-300">TV Shows</span>
+            <span className="text-xs md:text-sm text-gray-300">TV Shows</span>
           </div>
         </div>
 
-        <div className="text-sm text-gray-300">
+        {/* Info Text - Simplified on mobile */}
+        <div className="text-xs md:text-sm text-gray-300 text-center md:text-left">
           <span className="opacity-75">✨ Journey through time</span>
-          <span className="mx-3">•</span>
-          <span>Click media to explore</span>
+          <span className="hidden md:inline mx-3">•</span>
+          <span className="hidden md:inline">Click media to explore</span>
           {eraFilter && (
             <>
-              <span className="mx-3">•</span>
+              <span className="mx-2 md:mx-3">•</span>
               <span className="text-teal-400">Viewing: {eraFilter}</span>
             </>
           )}
