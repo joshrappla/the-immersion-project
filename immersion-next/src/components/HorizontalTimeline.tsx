@@ -173,6 +173,66 @@ export default function HorizontalTimeline() {
     }, 0);
   };
 
+  // Pinch-to-zoom for mobile
+  const touchStartRef = useRef<{ distance: number; zoom: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 2) {
+      // Two fingers - start pinch zoom
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      touchStartRef.current = { distance, zoom: zoomLevel };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 2 && touchStartRef.current) {
+      e.preventDefault();
+      
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const currentDistance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+
+      // Calculate zoom change
+      const scale = currentDistance / touchStartRef.current.distance;
+      const newZoom = Math.max(0.5, Math.min(20, touchStartRef.current.zoom * scale));
+      
+      // Get center point between fingers
+      const centerX = (touch1.clientX + touch2.clientX) / 2;
+      const container = timelineRef.current;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const scrollX = container.scrollLeft;
+      const centerPositionOnTimeline = (centerX - rect.left) + scrollX;
+      
+      // Calculate year at center
+      const yearAtCenter = (centerPositionOnTimeline / zoomLevel) + minYear;
+      
+      // Update zoom
+      setZoomLevel(newZoom);
+      
+      // Adjust scroll to keep same year at center
+      setTimeout(() => {
+        if (container) {
+          const newPositionOnTimeline = (yearAtCenter - minYear) * newZoom;
+          container.scrollLeft = newPositionOnTimeline - (centerX - rect.left);
+        }
+      }, 0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchStartRef.current = null;
+  };
+
   // Calculate positioned items with stacking
   const positionedItems = useMemo((): PositionedMediaItem[] => {
     const items = filteredItems.map(item => ({
@@ -532,8 +592,11 @@ export default function HorizontalTimeline() {
         <div
           ref={timelineRef}
           onWheel={handleWheel}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           className="absolute top-0 left-0 right-0 bottom-0 overflow-x-auto overflow-y-hidden"
-          style={{ scrollbarWidth: 'thin' }}
+          style={{ scrollbarWidth: 'thin', touchAction: 'pan-x' }}
         >
           <div 
             className="relative h-full" 
