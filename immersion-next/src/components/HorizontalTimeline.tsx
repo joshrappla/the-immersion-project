@@ -45,11 +45,13 @@ export default function HorizontalTimeline() {
   const [mediaTypeFilter, setMediaTypeFilter] = useState('');
   const [eraFilter, setEraFilter] = useState('');
   const [loading, setLoading] = useState(true);
-  const [zoomLevel, setZoomLevel] = useState(2); // Pixels per year (default: 2)
+  const [zoomLevel, setZoomLevel] = useState(2);
+  const [mounted, setMounted] = useState(false); // Fix hydration error
+  const [showContributeModal, setShowContributeModal] = useState(false);
+  const [contributeTab, setContributeTab] = useState<'media' | 'feedback'>('media');
   const timelineRef = useRef<HTMLDivElement>(null);
-  const bmcButtonRef = useRef<HTMLDivElement>(null);
 
-  // Stable starfield
+  // Stable starfield - only generate on client
   const stars = useMemo(() => generateStarfield(200), []);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -73,30 +75,9 @@ export default function HorizontalTimeline() {
     'American Revolution': '#1e40af',
   };
 
-  // Load Buy Me a Coffee script
+  // Set mounted state - fixes hydration error
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js';
-    script.setAttribute('data-name', 'bmc-button');
-    script.setAttribute('data-slug', 'joshrapp');
-    script.setAttribute('data-color', '#1e2939');
-    script.setAttribute('data-emoji', '');
-    script.setAttribute('data-font', 'Cookie');
-    script.setAttribute('data-text', 'Buy me a coffee');
-    script.setAttribute('data-outline-color', '#ffffff');
-    script.setAttribute('data-font-color', '#ffffff');
-    script.setAttribute('data-coffee-color', '#FFDD00');
-    script.async = true;
-
-    if (bmcButtonRef.current) {
-      bmcButtonRef.current.appendChild(script);
-    }
-
-    return () => {
-      if (bmcButtonRef.current && script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
+    setMounted(true);
   }, []);
 
   // Fetch media items
@@ -164,30 +145,25 @@ export default function HorizontalTimeline() {
 
   // Handle mouse wheel zoom
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (!e.ctrlKey && !e.metaKey) return; // Only zoom with Ctrl/Cmd held
+    if (!e.ctrlKey && !e.metaKey) return;
     
     e.preventDefault();
     
     const container = timelineRef.current;
     if (!container) return;
 
-    // Get mouse position relative to container
     const rect = container.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const scrollX = container.scrollLeft;
     const mousePositionOnTimeline = mouseX + scrollX;
 
-    // Calculate zoom factor
-    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1; // Scroll down = zoom out, up = zoom in
-    const newZoom = Math.max(0.5, Math.min(20, zoomLevel * zoomFactor)); // Clamp between 0.5 and 20
+    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+    const newZoom = Math.max(0.5, Math.min(20, zoomLevel * zoomFactor));
 
-    // Calculate the year at mouse position
     const yearAtMouse = (mousePositionOnTimeline / zoomLevel) + minYear;
 
-    // Update zoom
     setZoomLevel(newZoom);
 
-    // Adjust scroll to keep the same year under the mouse
     setTimeout(() => {
       if (container) {
         const newPositionOnTimeline = (yearAtMouse - minYear) * newZoom;
@@ -196,7 +172,7 @@ export default function HorizontalTimeline() {
     }, 0);
   };
 
-  // Calculate positioned items with stacking to avoid overlaps
+  // Calculate positioned items with stacking
   const positionedItems = useMemo((): PositionedMediaItem[] => {
     const items = filteredItems.map(item => ({
       ...item,
@@ -204,20 +180,16 @@ export default function HorizontalTimeline() {
       stackLevel: 0,
     }));
 
-    // Sort by position
     items.sort((a, b) => a.position - b.position);
 
-    // Detect overlaps and assign stack levels
-    const minDistance = 180; // Minimum pixels between items
+    const minDistance = 180;
     for (let i = 0; i < items.length; i++) {
       let maxStackBelow = -1;
       
-      // Check all previous items within overlap distance
       for (let j = i - 1; j >= 0; j--) {
         const distance = items[i].position - items[j].position;
-        if (distance > minDistance) break; // Far enough, no more overlaps
+        if (distance > minDistance) break;
         
-        // Items overlap, so current item must be above this one
         maxStackBelow = Math.max(maxStackBelow, items[j].stackLevel);
       }
       
@@ -227,7 +199,6 @@ export default function HorizontalTimeline() {
     return items;
   }, [filteredItems, zoomLevel, minYear, maxYear]);
 
-  // Get max stack level for positioning
   const maxStackLevel = Math.max(...positionedItems.map(item => item.stackLevel), 0);
 
   // Scroll timeline
@@ -241,7 +212,7 @@ export default function HorizontalTimeline() {
     }
   };
 
-  // Auto-scroll to show filtered content
+  // Auto-scroll to filtered content
   useEffect(() => {
     if (eraFilter && eraRanges[eraFilter] && timelineRef.current) {
       const eraRange = eraRanges[eraFilter];
@@ -276,7 +247,6 @@ export default function HorizontalTimeline() {
     );
   }
 
-  // Build display eras from actual data
   const displayEras: Era[] = uniqueEras
     .filter(eraName => !eraFilter || eraName === eraFilter)
     .map(eraName => ({
@@ -290,22 +260,24 @@ export default function HorizontalTimeline() {
 
   return (
     <div className="relative min-h-screen bg-black overflow-hidden">
-      {/* Starfield Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        {stars.map((star) => (
-          <div
-            key={star.id}
-            className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
-            style={{
-              left: `${star.left}%`,
-              top: `${star.top}%`,
-              opacity: star.opacity,
-              animationDelay: `${star.delay}s`,
-              animationDuration: `${star.duration}s`,
-            }}
-          />
-        ))}
-      </div>
+      {/* Starfield Background - Only render after mount to fix hydration */}
+      {mounted && (
+        <div className="absolute inset-0 overflow-hidden">
+          {stars.map((star) => (
+            <div
+              key={star.id}
+              className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
+              style={{
+                left: `${star.left}%`,
+                top: `${star.top}%`,
+                opacity: star.opacity,
+                animationDelay: `${star.delay}s`,
+                animationDuration: `${star.duration}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Header */}
       <div className="relative z-50 flex items-center justify-between p-6 bg-black/50 backdrop-blur-sm border-b border-white/10">
@@ -322,8 +294,18 @@ export default function HorizontalTimeline() {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Buy Me a Coffee Button */}
-          <div ref={bmcButtonRef} className="flex items-center" />
+          {/* Buy Me a Coffee Button - Custom Styled to Match */}
+          <a 
+            href="https://www.buymeacoffee.com/joshrapp" 
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 text-sm hover:bg-gray-700 transition"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.9 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/>
+            </svg>
+            Buy me a coffee
+          </a>
 
           <select
             value={mediaTypeFilter}
@@ -372,6 +354,16 @@ export default function HorizontalTimeline() {
             </button>
           </div>
 
+          <button
+            onClick={() => setShowContributeModal(true)}
+            className="flex items-center gap-2 bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 text-sm hover:bg-gray-700 transition"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Contribute
+          </button>
+
           <Link
             href="/admin"
             className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 text-sm hover:bg-gray-700 transition"
@@ -383,7 +375,6 @@ export default function HorizontalTimeline() {
 
       {/* Timeline Container */}
       <div className="relative h-[calc(100vh-180px)]">
-        {/* Scrollable Timeline with Mouse Wheel Zoom */}
         <div
           ref={timelineRef}
           onWheel={handleWheel}
@@ -395,10 +386,10 @@ export default function HorizontalTimeline() {
             style={{ 
               width: `${timelineWidth}px`, 
               minWidth: '100%',
-              paddingTop: `${maxStackLevel * 60 + 120}px`, // Dynamic padding for stacking + era labels
+              paddingTop: `${maxStackLevel * 60 + 120}px`,
             }}
           >
-            {/* Era Labels - Now inside scrollable container */}
+            {/* Era Labels */}
             <div className="absolute top-4 left-0 right-0 h-12">
               {displayEras.map((era) => {
                 const eraStartPos = yearToPixel(era.startYear);
@@ -441,7 +432,7 @@ export default function HorizontalTimeline() {
               />
             ))}
 
-            {/* Timeline Line - positioned based on content height */}
+            {/* Timeline Line */}
             <div 
               className="absolute left-0 right-0 h-0.5 bg-white/20" 
               style={{ 
@@ -468,10 +459,10 @@ export default function HorizontalTimeline() {
               );
             })}
 
-            {/* Media Items with Stacking */}
+            {/* Media Items */}
             {positionedItems.map((item) => {
               const color = getMediaColor(item.mediaType);
-              const stackOffset = item.stackLevel * 60; // 60px between each level
+              const stackOffset = item.stackLevel * 60;
               const timelineY = `calc(50% + ${maxStackLevel * 30}px)`;
               
               return (
@@ -483,7 +474,6 @@ export default function HorizontalTimeline() {
                     top: timelineY,
                   }}
                 >
-                  {/* Vertical connector line from dot to title */}
                   {item.stackLevel > 0 && (
                     <div
                       className="absolute left-1/2 transform -translate-x-1/2 w-0.5 bg-white/30"
@@ -494,7 +484,6 @@ export default function HorizontalTimeline() {
                     />
                   )}
 
-                  {/* Title above the timeline */}
                   <div
                     className="absolute left-1/2 transform -translate-x-1/2 cursor-pointer group"
                     style={{
@@ -514,7 +503,6 @@ export default function HorizontalTimeline() {
                     </div>
                   </div>
                   
-                  {/* Connector Dot on timeline */}
                   <div
                     className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full cursor-pointer hover:scale-150 transition-transform z-10"
                     style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}` }}
@@ -546,7 +534,7 @@ export default function HorizontalTimeline() {
         </button>
       </div>
 
-      {/* Bottom Legend & Info */}
+      {/* Bottom Legend */}
       <div className="relative z-50 flex items-center justify-between p-4 bg-black/50 backdrop-blur-sm border-t border-white/10">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
@@ -565,8 +553,6 @@ export default function HorizontalTimeline() {
 
         <div className="text-sm text-gray-300">
           <span className="opacity-75">✨ Journey through time</span>
-          <span className="mx-3">•</span>
-          <span>Hold Ctrl/Cmd + Scroll to Zoom</span>
           <span className="mx-3">•</span>
           <span>Click media to explore</span>
           {eraFilter && (
@@ -588,7 +574,6 @@ export default function HorizontalTimeline() {
             className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl max-w-2xl w-full shadow-2xl border border-gray-700 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
             <button
               onClick={() => setSelectedItem(null)}
               className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition z-10"
@@ -596,7 +581,6 @@ export default function HorizontalTimeline() {
               ✕
             </button>
 
-            {/* Image */}
             <div className="h-64 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center border-b border-gray-700">
               {selectedItem.imageUrl ? (
                 <img
@@ -609,7 +593,6 @@ export default function HorizontalTimeline() {
               )}
             </div>
 
-            {/* Content */}
             <div className="p-8">
               <div className="flex items-center gap-2 mb-3">
                 <div
@@ -650,6 +633,293 @@ export default function HorizontalTimeline() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contribute Modal */}
+      {showContributeModal && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-8"
+          onClick={() => setShowContributeModal(false)}
+        >
+          <div
+            className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl max-w-2xl w-full shadow-2xl border border-gray-700 overflow-hidden max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowContributeModal(false)}
+              className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition z-10"
+            >
+              ✕
+            </button>
+
+            {/* Header */}
+            <div className="p-8 border-b border-gray-700">
+              <h2 className="text-3xl font-bold text-white mb-2">Contribute to The Immersion Verse</h2>
+              <p className="text-gray-400">Help us expand our historical timeline or share your feedback</p>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-700">
+              <button
+                onClick={() => setContributeTab('media')}
+                className={`flex-1 px-6 py-4 font-semibold transition ${
+                  contributeTab === 'media'
+                    ? 'text-white bg-gray-800 border-b-2 border-purple-600'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                  </svg>
+                  Suggest Media
+                </div>
+              </button>
+              <button
+                onClick={() => setContributeTab('feedback')}
+                className={`flex-1 px-6 py-4 font-semibold transition ${
+                  contributeTab === 'feedback'
+                    ? 'text-white bg-gray-800 border-b-2 border-purple-600'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                  </svg>
+                  Feedback
+                </div>
+              </button>
+            </div>
+
+            {/* Forms */}
+            <div className="p-8">
+              {contributeTab === 'media' ? (
+                /* Media Suggestion Form */
+                <form
+                  action="https://formspree.io/f/YOUR_FORM_ID"
+                  method="POST"
+                  className="space-y-4"
+                >
+                  <input type="hidden" name="_subject" value="New Media Suggestion - The Immersion Verse" />
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Your Name (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition"
+                      placeholder="John Doe"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Email (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition"
+                      placeholder="john@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Media Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="title"
+                      required
+                      className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition"
+                      placeholder="Vikings"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">
+                        Media Type <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="mediaType"
+                        required
+                        className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition"
+                      >
+                        <option value="">Select type...</option>
+                        <option value="Game">Game</option>
+                        <option value="Movie">Movie</option>
+                        <option value="TV">TV Show</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">
+                        Era (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        name="era"
+                        className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition"
+                        placeholder="Viking Age"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">
+                        Start Year (Optional)
+                      </label>
+                      <input
+                        type="number"
+                        name="startYear"
+                        className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition"
+                        placeholder="793"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">
+                        End Year (Optional)
+                      </label>
+                      <input
+                        type="number"
+                        name="endYear"
+                        className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition"
+                        placeholder="1066"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Description (Optional)
+                    </label>
+                    <textarea
+                      name="description"
+                      rows={4}
+                      className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition resize-none"
+                      placeholder="Brief description of the media and its historical setting..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Source URL (Optional)
+                    </label>
+                    <input
+                      type="url"
+                      name="sourceUrl"
+                      className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition"
+                      placeholder="https://..."
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="submit"
+                      className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition"
+                    >
+                      Submit Suggestion
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowContributeModal(false)}
+                      className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                /* Feedback Form */
+                <form
+                  action="https://formspree.io/f/YOUR_FORM_ID"
+                  method="POST"
+                  className="space-y-4"
+                >
+                  <input type="hidden" name="_subject" value="Feedback - The Immersion Verse" />
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Your Name (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition"
+                      placeholder="John Doe"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Email (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition"
+                      placeholder="john@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Feedback Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="feedbackType"
+                      required
+                      className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition"
+                    >
+                      <option value="">Select type...</option>
+                      <option value="Feature Request">Feature Request</option>
+                      <option value="Bug Report">Bug Report</option>
+                      <option value="General Feedback">General Feedback</option>
+                      <option value="Question">Question</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Your Message <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      name="message"
+                      required
+                      rows={6}
+                      className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition resize-none"
+                      placeholder="Share your thoughts, suggestions, or report an issue..."
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="submit"
+                      className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition"
+                    >
+                      Send Feedback
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowContributeModal(false)}
+                      className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>
