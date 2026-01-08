@@ -47,6 +47,7 @@ export default function HorizontalTimeline() {
   const [loading, setLoading] = useState(true);
   const [zoomLevel, setZoomLevel] = useState(2); // Pixels per year (default: 2)
   const timelineRef = useRef<HTMLDivElement>(null);
+  const bmcButtonRef = useRef<HTMLDivElement>(null);
 
   // Stable starfield
   const stars = useMemo(() => generateStarfield(200), []);
@@ -71,6 +72,32 @@ export default function HorizontalTimeline() {
     'Post-WWI': '#7f1d1d',
     'American Revolution': '#1e40af',
   };
+
+  // Load Buy Me a Coffee script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js';
+    script.setAttribute('data-name', 'bmc-button');
+    script.setAttribute('data-slug', 'joshrapp');
+    script.setAttribute('data-color', '#1e2939');
+    script.setAttribute('data-emoji', '');
+    script.setAttribute('data-font', 'Cookie');
+    script.setAttribute('data-text', 'Buy me a coffee');
+    script.setAttribute('data-outline-color', '#ffffff');
+    script.setAttribute('data-font-color', '#ffffff');
+    script.setAttribute('data-coffee-color', '#FFDD00');
+    script.async = true;
+
+    if (bmcButtonRef.current) {
+      bmcButtonRef.current.appendChild(script);
+    }
+
+    return () => {
+      if (bmcButtonRef.current && script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
+  }, []);
 
   // Fetch media items
   useEffect(() => {
@@ -295,6 +322,9 @@ export default function HorizontalTimeline() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Buy Me a Coffee Button */}
+          <div ref={bmcButtonRef} className="flex items-center" />
+
           <select
             value={mediaTypeFilter}
             onChange={(e) => setMediaTypeFilter(e.target.value)}
