@@ -74,9 +74,32 @@ export default function VerticalTimeline() {
       }
       
       const data = await response.json();
-      console.log('Fetched items:', data.length);
+      console.log('Raw API response:', data);
       
-      setMediaItems(data.sort((a: MediaItem, b: MediaItem) => a.startYear - b.startYear));
+      // Handle different response formats
+      let items: MediaItem[] = [];
+      
+      if (Array.isArray(data)) {
+        items = data;
+      } else if (data.items && Array.isArray(data.items)) {
+        items = data.items;
+      } else if (data.media && Array.isArray(data.media)) {
+        items = data.media;
+      } else if (typeof data === 'object') {
+        // Try to extract array from object
+        const values = Object.values(data);
+        if (values.length > 0 && Array.isArray(values[0])) {
+          items = values[0] as MediaItem[];
+        }
+      }
+      
+      console.log('Processed items:', items.length);
+      
+      if (!Array.isArray(items)) {
+        throw new Error('API response is not in expected format');
+      }
+      
+      setMediaItems(items.sort((a: MediaItem, b: MediaItem) => a.startYear - b.startYear));
       setError(null);
     } catch (err) {
       console.error('Error fetching media:', err);
