@@ -33,6 +33,7 @@ export default function VerticalTimeline() {
   const [mediaTypeFilter, setMediaTypeFilter] = useState('');
   const [eraFilter, setEraFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -65,11 +66,21 @@ export default function VerticalTimeline() {
 
   const fetchMediaItems = async () => {
     try {
+      console.log('Fetching from:', API_URL);
       const response = await fetch(`${API_URL}/media`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      console.log('Fetched items:', data.length);
+      
       setMediaItems(data.sort((a: MediaItem, b: MediaItem) => a.startYear - b.startYear));
-    } catch (error) {
-      console.error('Error fetching media:', error);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching media:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load timeline');
     } finally {
       setLoading(false);
     }
@@ -91,7 +102,27 @@ export default function VerticalTimeline() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-2xl">Loading timeline...</div>
+        <div className="text-white text-center">
+          <div className="text-2xl mb-4">Loading timeline...</div>
+          <div className="text-gray-400 text-sm">Fetching media items</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="text-red-500 text-xl mb-4">⚠️ Error Loading Timeline</div>
+          <div className="text-gray-400 mb-4">{error}</div>
+          <button
+            onClick={fetchMediaItems}
+            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -147,7 +178,7 @@ export default function VerticalTimeline() {
           onClick={() => setMobileMenuOpen(false)}
         >
           <div
-            className="absolute right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-gray-900 shadow-2xl"
+            className="absolute right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-gray-900 shadow-2xl overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Menu Header */}
@@ -179,7 +210,10 @@ export default function VerticalTimeline() {
                   <span className="text-gray-400 text-sm mb-1 block">Media Type</span>
                   <select
                     value={mediaTypeFilter}
-                    onChange={(e) => setMediaTypeFilter(e.target.value)}
+                    onChange={(e) => {
+                      setMediaTypeFilter(e.target.value);
+                      setMobileMenuOpen(false);
+                    }}
                     className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg text-base border border-gray-700"
                   >
                     <option value="">All Types</option>
@@ -193,7 +227,10 @@ export default function VerticalTimeline() {
                   <span className="text-gray-400 text-sm mb-1 block">Era</span>
                   <select
                     value={eraFilter}
-                    onChange={(e) => setEraFilter(e.target.value)}
+                    onChange={(e) => {
+                      setEraFilter(e.target.value);
+                      setMobileMenuOpen(false);
+                    }}
                     className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg text-base border border-gray-700"
                   >
                     <option value="">All Eras</option>
@@ -202,6 +239,11 @@ export default function VerticalTimeline() {
                     ))}
                   </select>
                 </label>
+              </div>
+
+              {/* Item Count */}
+              <div className="text-center text-gray-400 text-sm py-2 border-t border-gray-800">
+                Showing {filteredItems.length} of {mediaItems.length} items
               </div>
 
               {/* Admin Link */}
@@ -218,80 +260,95 @@ export default function VerticalTimeline() {
 
       {/* Vertical Timeline */}
       <div className="relative z-10 py-8 px-4 max-w-4xl mx-auto">
-        {/* Timeline Line */}
-        <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-600 via-purple-500 to-purple-600 transform -translate-x-1/2" />
+        {filteredItems.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="text-gray-400 text-xl mb-4">
+              {mediaItems.length === 0 ? '📭 No media items yet' : '🔍 No items match your filters'}
+            </div>
+            <div className="text-gray-500 text-sm">
+              {mediaItems.length === 0 
+                ? 'Add some media items through the admin panel'
+                : 'Try adjusting your filters'}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Timeline Line */}
+            <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-600 via-purple-500 to-purple-600 transform -translate-x-1/2" />
 
-        {/* Timeline Items */}
-        <div className="space-y-12">
-          {filteredItems.map((item, index) => {
-            const isLeft = index % 2 === 0;
-            const color = mediaTypeColors[item.mediaType] || '#8b5cf6';
-            const eraColor = eraColors[item.timePeriod] || '#8b5cf6';
+            {/* Timeline Items */}
+            <div className="space-y-12">
+              {filteredItems.map((item, index) => {
+                const isLeft = index % 2 === 0;
+                const color = mediaTypeColors[item.mediaType] || '#8b5cf6';
+                const eraColor = eraColors[item.timePeriod] || '#8b5cf6';
 
-            return (
-              <div
-                key={item.mediaId}
-                className={`relative flex items-center ${isLeft ? 'flex-row' : 'flex-row-reverse'}`}
-              >
-                {/* Card */}
-                <div
-                  className={`w-5/12 ${isLeft ? 'pr-8 text-right' : 'pl-8 text-left'}`}
-                  onClick={() => setSelectedItem(item)}
-                >
+                return (
                   <div
-                    className="bg-gray-900 border-2 rounded-xl p-4 cursor-pointer hover:scale-105 transition-transform shadow-lg"
-                    style={{
-                      borderColor: color,
-                      boxShadow: `0 0 20px ${color}40`,
-                    }}
+                    key={item.mediaId}
+                    className={`relative flex items-center ${isLeft ? 'flex-row' : 'flex-row-reverse'}`}
                   >
-                    <h3 className="text-white font-bold text-lg mb-2">{item.title}</h3>
-                    <p className="text-gray-400 text-sm mb-1">
-                      {item.startYear === item.endYear 
-                        ? item.startYear 
-                        : `${item.startYear} - ${item.endYear}`}
-                    </p>
-                    <div className="flex gap-2 justify-end mt-2">
-                      <span
-                        className="px-3 py-1 rounded-full text-xs font-medium"
+                    {/* Card */}
+                    <div
+                      className={`w-5/12 ${isLeft ? 'pr-4 text-right' : 'pl-4 text-left'}`}
+                      onClick={() => setSelectedItem(item)}
+                    >
+                      <div
+                        className="bg-gray-900 border-2 rounded-xl p-4 cursor-pointer hover:scale-105 transition-transform shadow-lg"
                         style={{
-                          backgroundColor: `${eraColor}30`,
-                          color: eraColor,
+                          borderColor: color,
+                          boxShadow: `0 0 20px ${color}40`,
                         }}
                       >
-                        {item.timePeriod}
-                      </span>
-                      <span
-                        className="px-3 py-1 rounded-full text-xs font-medium"
-                        style={{
-                          backgroundColor: `${color}30`,
-                          color: color,
-                        }}
-                      >
-                        {item.mediaType}
-                      </span>
+                        <h3 className="text-white font-bold text-base mb-2">{item.title}</h3>
+                        <p className="text-gray-400 text-xs mb-2">
+                          {item.startYear === item.endYear 
+                            ? item.startYear 
+                            : `${item.startYear} - ${item.endYear}`}
+                        </p>
+                        <div className={`flex gap-2 flex-wrap mt-2 ${isLeft ? 'justify-end' : 'justify-start'}`}>
+                          <span
+                            className="px-2 py-1 rounded-full text-xs font-medium"
+                            style={{
+                              backgroundColor: `${eraColor}30`,
+                              color: eraColor,
+                            }}
+                          >
+                            {item.timePeriod}
+                          </span>
+                          <span
+                            className="px-2 py-1 rounded-full text-xs font-medium"
+                            style={{
+                              backgroundColor: `${color}30`,
+                              color: color,
+                            }}
+                          >
+                            {item.mediaType}
+                          </span>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Center Dot */}
+                    <div className="absolute left-1/2 transform -translate-x-1/2 z-20">
+                      <div
+                        className="w-4 h-4 rounded-full cursor-pointer hover:scale-150 transition-transform"
+                        style={{
+                          backgroundColor: color,
+                          boxShadow: `0 0 10px ${color}`,
+                        }}
+                        onClick={() => setSelectedItem(item)}
+                      />
+                    </div>
+
+                    {/* Empty space on other side */}
+                    <div className="w-5/12" />
                   </div>
-                </div>
-
-                {/* Center Dot */}
-                <div className="absolute left-1/2 transform -translate-x-1/2 z-20">
-                  <div
-                    className="w-4 h-4 rounded-full cursor-pointer hover:scale-150 transition-transform"
-                    style={{
-                      backgroundColor: color,
-                      boxShadow: `0 0 10px ${color}`,
-                    }}
-                    onClick={() => setSelectedItem(item)}
-                  />
-                </div>
-
-                {/* Empty space on other side */}
-                <div className="w-5/12" />
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Media Detail Modal */}
