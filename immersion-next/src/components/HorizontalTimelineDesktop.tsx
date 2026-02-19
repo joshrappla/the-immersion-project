@@ -46,11 +46,17 @@ export default function HorizontalTimelineDesktop() {
   const [eraFilter, setEraFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [zoomLevel, setZoomLevel] = useState(2);
+  const setZoomLevelSync = (newZoom: number) => {
+    zoomLevelRef.current = newZoom;
+    setZoomLevel(newZoom);
+  };
   const [mounted, setMounted] = useState(false); // Fix hydration error
   const [showContributeModal, setShowContributeModal] = useState(false);
   const [contributeTab, setContributeTab] = useState<'media' | 'feedback'>('media');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
+  const zoomLevelRef = useRef(2);
+  const minYearRef = useRef(0);
 
   // Stable starfield - only generate on client
   const stars = useMemo(() => generateStarfield(200), []);
@@ -144,34 +150,37 @@ export default function HorizontalTimelineDesktop() {
     return (year - minYear) * zoomLevel;
   };
 
-  // Handle mouse wheel zoom
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (!e.ctrlKey && !e.metaKey) return;
-    
+  // Handle mouse wheel zoom (plain scroll = zoom, no modifier key needed)
+  const handleWheelNative = (e: WheelEvent) => {
     e.preventDefault();
-    
+
     const container = timelineRef.current;
     if (!container) return;
 
+    const currentZoom = zoomLevelRef.current;
     const rect = container.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const scrollX = container.scrollLeft;
     const mousePositionOnTimeline = mouseX + scrollX;
 
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-    const newZoom = Math.max(0.5, Math.min(20, zoomLevel * zoomFactor));
+    const newZoom = Math.max(0.5, Math.min(20, currentZoom * zoomFactor));
 
-    const yearAtMouse = (mousePositionOnTimeline / zoomLevel) + minYear;
+    const currentMinYear = minYearRef.current;
+    const yearAtMouse = (mousePositionOnTimeline / currentZoom) + currentMinYear;
 
-    setZoomLevel(newZoom);
+    setZoomLevelSync(newZoom);
 
     setTimeout(() => {
       if (container) {
-        const newPositionOnTimeline = (yearAtMouse - minYear) * newZoom;
+        const newPositionOnTimeline = (yearAtMouse - currentMinYear) * newZoom;
         container.scrollLeft = newPositionOnTimeline - mouseX;
       }
     }, 0);
   };
+
+  // Keep React synthetic handler for compatibility but defer to native
+  const handleWheel = (_e: React.WheelEvent<HTMLDivElement>) => { /* handled natively */ };
 
   // Pinch-to-zoom for mobile
   const touchStartRef = useRef<{ distance: number; zoom: number } | null>(null);
@@ -217,7 +226,7 @@ export default function HorizontalTimelineDesktop() {
       const yearAtCenter = (centerPositionOnTimeline / zoomLevel) + minYear;
       
       // Update zoom
-      setZoomLevel(newZoom);
+      setZoomLevelSync(newZoom);
       
       // Adjust scroll to keep same year at center
       setTimeout(() => {
@@ -286,6 +295,21 @@ export default function HorizontalTimelineDesktop() {
       }, 100);
     }
   }, [eraFilter]);
+
+  // Keep minYearRef in sync so the wheel handler always reads the latest value
+  useEffect(() => {
+    minYearRef.current = minYear;
+  }, [minYear]);
+
+  // Attach non-passive wheel listener so preventDefault() stops page/horizontal scroll while zooming
+  useEffect(() => {
+    const container = timelineRef.current;
+    if (!container) return;
+    container.addEventListener('wheel', handleWheelNative, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheelNative);
+  // handleWheelNative only uses refs, so this only needs to run once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getMediaColor = (type: string) => {
     switch (type.toLowerCase()) {
@@ -395,7 +419,7 @@ export default function HorizontalTimelineDesktop() {
           {/* Zoom Controls */}
           <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 rounded-lg border border-gray-700">
             <button
-              onClick={() => setZoomLevel(prev => Math.max(0.5, prev * 0.8))}
+              onClick={() => setZoomLevelSync(Math.max(0.5, zoomLevelRef.current * 0.8))}
               className="text-white hover:text-teal-400 transition"
               title="Zoom Out"
             >
@@ -407,7 +431,7 @@ export default function HorizontalTimelineDesktop() {
               {Math.round(zoomLevel * 50)}%
             </span>
             <button
-              onClick={() => setZoomLevel(prev => Math.min(20, prev * 1.25))}
+              onClick={() => setZoomLevelSync(Math.min(20, zoomLevelRef.current * 1.25))}
               className="text-white hover:text-teal-400 transition"
               title="Zoom In"
             >
@@ -544,7 +568,7 @@ export default function HorizontalTimelineDesktop() {
                 <label className="block text-sm font-semibold text-white mb-2">Zoom</label>
                 <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
                   <button
-                    onClick={() => setZoomLevel(prev => Math.max(0.5, prev * 0.8))}
+                    onClick={() => setZoomLevelSync(Math.max(0.5, zoomLevelRef.current * 0.8))}
                     className="w-10 h-10 flex items-center justify-center text-white hover:text-teal-400 transition"
                     title="Zoom Out"
                   >
@@ -556,7 +580,7 @@ export default function HorizontalTimelineDesktop() {
                     {Math.round(zoomLevel * 50)}%
                   </span>
                   <button
-                    onClick={() => setZoomLevel(prev => Math.min(20, prev * 1.25))}
+                    onClick={() => setZoomLevelSync(Math.min(20, zoomLevelRef.current * 1.25))}
                     className="w-10 h-10 flex items-center justify-center text-white hover:text-teal-400 transition"
                     title="Zoom In"
                   >
