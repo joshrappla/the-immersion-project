@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 
 interface MediaItem {
@@ -36,6 +36,11 @@ export default function VerticalTimeline() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showContributeModal, setShowContributeModal] = useState(false);
+  const [contributeTab, setContributeTab] = useState<'media' | 'feedback'>('media');
+  const [timelineScale, setTimelineScale] = useState(1);
+  const pinchStartRef = useRef<{ distance: number; scale: number } | null>(null);
+  const timelineContainerRef = useRef<HTMLDivElement>(null);
 
   const stars = useMemo(() => generateStarfield(200), []);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -108,6 +113,47 @@ export default function VerticalTimeline() {
       setLoading(false);
     }
   };
+
+  // Pinch-to-zoom handlers for vertical timeline
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 2) {
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      pinchStartRef.current = { distance, scale: timelineScale };
+    }
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (e.touches.length === 2 && pinchStartRef.current) {
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const currentDistance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      const scaleChange = currentDistance / pinchStartRef.current.distance;
+      const newScale = Math.max(0.5, Math.min(3, pinchStartRef.current.scale * scaleChange));
+      setTimelineScale(newScale);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    pinchStartRef.current = null;
+  };
+
+  // Attach non-passive touchmove so preventDefault() blocks scroll during pinch
+  useEffect(() => {
+    const el = timelineContainerRef.current;
+    if (!el) return;
+    el.addEventListener('touchmove', handleTouchMove, { passive: false });
+    return () => el.removeEventListener('touchmove', handleTouchMove);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredItems = mediaItems.filter(item => {
     const matchesType = !mediaTypeFilter || item.mediaType === mediaTypeFilter;
@@ -219,12 +265,15 @@ export default function VerticalTimeline() {
             <div className="p-4 space-y-4">
               {/* Buy Me a Coffee */}
               <a
-                href="https://buymeacoffee.com/yourusername"
+                href="https://www.buymeacoffee.com/joshrapp"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-6 py-3 rounded-lg text-center transition"
+                className="flex items-center gap-3 w-full p-4 bg-gray-800 text-white rounded-lg border border-gray-700 hover:bg-gray-700 transition"
               >
-                ☕ Buy me a coffee
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.9 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/>
+                </svg>
+                <span className="font-semibold">Buy me a coffee</span>
               </a>
 
               {/* Filters */}
@@ -241,7 +290,9 @@ export default function VerticalTimeline() {
                   >
                     <option value="">All Types</option>
                     {uniqueMediaTypes.map((type) => (
-                      <option key={type} value={type}>{type}</option>
+                      <option key={type} value={type}>
+                        {type.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                      </option>
                     ))}
                   </select>
                 </label>
@@ -264,6 +315,20 @@ export default function VerticalTimeline() {
                 </label>
               </div>
 
+              {/* Contribute */}
+              <button
+                onClick={() => {
+                  setShowContributeModal(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-3 w-full p-4 bg-gray-800 text-white rounded-lg border border-gray-700 hover:bg-gray-700 transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="font-semibold">Contribute</span>
+              </button>
+
               {/* Item Count */}
               <div className="text-center text-gray-400 text-sm py-2 border-t border-gray-800">
                 Showing {filteredItems.length} of {mediaItems.length} items
@@ -282,7 +347,13 @@ export default function VerticalTimeline() {
       )}
 
       {/* Vertical Timeline */}
-      <div className="relative z-10 py-8 px-4 max-w-4xl mx-auto">
+      <div
+        ref={timelineContainerRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className="relative z-10 py-8 px-4 max-w-4xl mx-auto"
+        style={{ zoom: timelineScale }}
+      >
         {filteredItems.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-gray-400 text-xl mb-4">
@@ -462,6 +533,155 @@ export default function VerticalTimeline() {
           ✨ Scroll through time • Tap to explore
         </p>
       </div>
+
+      {/* Contribute Modal */}
+      {showContributeModal && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowContributeModal(false)}
+        >
+          <div
+            className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl max-w-2xl w-full shadow-2xl border border-gray-700 overflow-hidden max-h-[90vh] overflow-y-auto relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowContributeModal(false)}
+              className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition z-10"
+            >
+              ✕
+            </button>
+
+            {/* Header */}
+            <div className="p-6 border-b border-gray-700">
+              <h2 className="text-2xl font-bold text-white mb-2">Contribute to The Immersion Verse</h2>
+              <p className="text-gray-400 text-sm">Help us expand our historical timeline or share your feedback</p>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-700">
+              <button
+                onClick={() => setContributeTab('media')}
+                className={`flex-1 px-4 py-4 font-semibold transition ${
+                  contributeTab === 'media'
+                    ? 'text-white bg-gray-800 border-b-2 border-purple-600'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                  </svg>
+                  Suggest Media
+                </div>
+              </button>
+              <button
+                onClick={() => setContributeTab('feedback')}
+                className={`flex-1 px-4 py-4 font-semibold transition ${
+                  contributeTab === 'feedback'
+                    ? 'text-white bg-gray-800 border-b-2 border-purple-600'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                  </svg>
+                  Feedback
+                </div>
+              </button>
+            </div>
+
+            {/* Forms */}
+            <div className="p-6">
+              {contributeTab === 'media' ? (
+                <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST" className="space-y-4">
+                  <input type="hidden" name="_subject" value="New Media Suggestion - The Immersion Verse" />
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">Your Name (Optional)</label>
+                    <input type="text" name="name" className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition" placeholder="John Doe" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">Email (Optional)</label>
+                    <input type="email" name="email" className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition" placeholder="john@example.com" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">Media Title <span className="text-red-500">*</span></label>
+                    <input type="text" name="title" required className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition" placeholder="Vikings" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">Media Type <span className="text-red-500">*</span></label>
+                      <select name="mediaType" required className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition">
+                        <option value="">Select type...</option>
+                        <option value="Game">Game</option>
+                        <option value="Movie">Movie</option>
+                        <option value="TV">TV Show</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">Era (Optional)</label>
+                      <input type="text" name="era" className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition" placeholder="Viking Age" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">Start Year (Optional)</label>
+                      <input type="number" name="startYear" className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition" placeholder="793" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">End Year (Optional)</label>
+                      <input type="number" name="endYear" className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition" placeholder="1066" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">Description (Optional)</label>
+                    <textarea name="description" rows={4} className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition resize-none" placeholder="Brief description of the media and its historical setting..." />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">Source URL (Optional)</label>
+                    <input type="url" name="sourceUrl" className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition" placeholder="https://..." />
+                  </div>
+                  <div className="flex gap-3 pt-4">
+                    <button type="submit" className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition">Submit Suggestion</button>
+                    <button type="button" onClick={() => setShowContributeModal(false)} className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition">Cancel</button>
+                  </div>
+                </form>
+              ) : (
+                <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST" className="space-y-4">
+                  <input type="hidden" name="_subject" value="Feedback - The Immersion Verse" />
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">Your Name (Optional)</label>
+                    <input type="text" name="name" className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition" placeholder="John Doe" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">Email (Optional)</label>
+                    <input type="email" name="email" className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition" placeholder="john@example.com" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">Feedback Type <span className="text-red-500">*</span></label>
+                    <select name="feedbackType" required className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition">
+                      <option value="">Select type...</option>
+                      <option value="Feature Request">Feature Request</option>
+                      <option value="Bug Report">Bug Report</option>
+                      <option value="General Feedback">General Feedback</option>
+                      <option value="Question">Question</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">Your Message <span className="text-red-500">*</span></label>
+                    <textarea name="message" required rows={6} className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition resize-none" placeholder="Share your thoughts, suggestions, or report an issue..." />
+                  </div>
+                  <div className="flex gap-3 pt-4">
+                    <button type="submit" className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition">Send Feedback</button>
+                    <button type="button" onClick={() => setShowContributeModal(false)} className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition">Cancel</button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes twinkle {
