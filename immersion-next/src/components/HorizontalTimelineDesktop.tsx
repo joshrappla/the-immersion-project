@@ -282,19 +282,42 @@ export default function HorizontalTimelineDesktop() {
     }
   };
 
-  // Auto-scroll to filtered content
+  // Auto-fit zoom + scroll when era or media type filter changes
   useEffect(() => {
-    if (eraFilter && eraRanges[eraFilter] && timelineRef.current) {
-      const eraRange = eraRanges[eraFilter];
-      const centerYear = (eraRange.min + eraRange.max) / 2;
-      const centerPosition = yearToPixel(centerYear);
+    const container = timelineRef.current;
+    if (!container) return;
+
+    const clientWidth = container.clientWidth;
+
+    if (eraFilter && eraRanges[eraFilter]) {
+      // Fit the era's full year range (already padded ±50 years in minYear/maxYear) to screen
+      const newZoom = Math.max(0.5, Math.min(20, clientWidth / yearRange));
+      setZoomLevelSync(newZoom);
       setTimeout(() => {
-        if (timelineRef.current) {
-          timelineRef.current.scrollLeft = centerPosition - (timelineRef.current.clientWidth / 2);
-        }
-      }, 100);
+        if (timelineRef.current) timelineRef.current.scrollLeft = 0;
+      }, 0);
+    } else if (mediaTypeFilter) {
+      // Find the year span covered by all items of this type
+      const typeItems = mediaItems.filter(
+        item => item.mediaType.toLowerCase() === mediaTypeFilter
+      );
+      if (typeItems.length > 0) {
+        const itemMinYear = Math.min(...typeItems.map(item => item.startYear));
+        const itemMaxYear = Math.max(...typeItems.map(item => item.endYear));
+        const padding = Math.max(30, (itemMaxYear - itemMinYear) * 0.1);
+        const span = (itemMaxYear - itemMinYear) + padding * 2;
+        const newZoom = Math.max(0.5, Math.min(20, clientWidth / span));
+        setZoomLevelSync(newZoom);
+        setTimeout(() => {
+          if (timelineRef.current) {
+            const scrollLeft = ((itemMinYear - padding) - minYear) * newZoom;
+            timelineRef.current.scrollLeft = Math.max(0, scrollLeft);
+          }
+        }, 0);
+      }
     }
-  }, [eraFilter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eraFilter, mediaTypeFilter]);
 
   // Keep minYearRef in sync so the wheel handler always reads the latest value
   useEffect(() => {
