@@ -53,12 +53,6 @@ export default function Home() {
             Explore Timeline
           </Link>
 
-          <Link
-            href="/admin"
-            className="px-8 py-4 border-2 border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white rounded-xl text-lg font-bold transition-all duration-300 hover:bg-gray-800/50"
-          >
-            Admin Panel
-          </Link>
         </div>
 
         <div className="mt-16 text-sm text-gray-500">
