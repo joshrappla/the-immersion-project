@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' https: data: blob:",
               "font-src 'self'",
               "connect-src 'self' https://p3cf32ynjf.execute-api.us-east-2.amazonaws.com https://formspree.io",
+              "media-src 'self'",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self' https://formspree.io",
