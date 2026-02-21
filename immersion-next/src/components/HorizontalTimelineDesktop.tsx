@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
+
+const CountryMap = dynamic(() => import('./CountryMap'), { ssr: false });
 
 interface MediaItem {
   mediaId: string;
@@ -13,6 +16,9 @@ interface MediaItem {
   description: string;
   imageUrl: string;
   streamingUrl: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface Era {
@@ -55,6 +61,7 @@ export default function HorizontalTimelineDesktop() {
   const [contributeTab, setContributeTab] = useState<'media' | 'feedback'>('media');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [musicOn, setMusicOn] = useState(false);
+  const [currentView, setCurrentView] = useState<'timeline' | 'country'>('timeline');
   const timelineRef = useRef<HTMLDivElement>(null);
   const zoomLevelRef = useRef(2);
   const minYearRef = useRef(0);
@@ -464,6 +471,22 @@ export default function HorizontalTimelineDesktop() {
             ))}
           </select>
 
+          {/* Country View Toggle */}
+          <button
+            onClick={() => setCurrentView(v => v === 'country' ? 'timeline' : 'country')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm transition ${
+              currentView === 'country'
+                ? 'bg-teal-900/60 text-teal-300 border-teal-700 hover:bg-teal-900'
+                : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700'
+            }`}
+            title="Country View"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 004 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Country View
+          </button>
+
           {/* Zoom Controls */}
           <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 rounded-lg border border-gray-700">
             <button
@@ -607,6 +630,24 @@ export default function HorizontalTimelineDesktop() {
                 <span className="font-semibold">{musicOn ? 'Music On' : 'Music Off'}</span>
               </button>
 
+              {/* Country View Toggle */}
+              <button
+                onClick={() => {
+                  setCurrentView(v => v === 'country' ? 'timeline' : 'country');
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex items-center gap-3 w-full p-4 rounded-lg border transition ${
+                  currentView === 'country'
+                    ? 'bg-teal-900/60 text-teal-300 border-teal-700 hover:bg-teal-900'
+                    : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700'
+                }`}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 004 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-semibold">{currentView === 'country' ? 'Timeline View' : 'Country View'}</span>
+              </button>
+
               {/* Contribute */}
               <button
                 onClick={() => {
@@ -702,7 +743,15 @@ export default function HorizontalTimelineDesktop() {
         </div>
       )}
 
+      {/* Country Map View */}
+      {currentView === 'country' && (
+        <div className="relative h-[calc(100vh-180px)]">
+          <CountryMap mediaItems={filteredItems} onSelectItem={setSelectedItem} />
+        </div>
+      )}
+
       {/* Timeline Container */}
+      {currentView === 'timeline' && (
       <div className="relative h-[calc(100vh-180px)]">
         <div
           ref={timelineRef}
@@ -865,6 +914,7 @@ export default function HorizontalTimelineDesktop() {
           </svg>
         </button>
       </div>
+      )}
 
       {/* Bottom Legend - Responsive */}
       <div className="relative z-50 flex flex-col md:flex-row items-center justify-between p-3 md:p-4 bg-black/50 backdrop-blur-sm border-t border-white/10 gap-3 md:gap-0">
@@ -1106,6 +1156,19 @@ export default function HorizontalTimelineDesktop() {
                         placeholder="Viking Age"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Country / Region / Civilization (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      name="country"
+                      className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition"
+                      placeholder="e.g. Roman Empire, Feudal Japan, Ancient Egypt"
+                    />
+                    <p className="text-gray-500 text-xs mt-1">The country, civilization, or empire where this story is set — used to place it on the Country Map.</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
