@@ -492,32 +492,70 @@
             }
         }
 
-        // Display media items
+        // Display media items — uses textContent/DOM APIs (never innerHTML with user data)
         function displayMediaItems(items) {
             const container = document.getElementById('mediaListContainer');
-            
+            container.innerHTML = '';
+
             if (items.length === 0) {
-                container.innerHTML = '<div class="loading">No media items yet</div>';
+                const empty = document.createElement('div');
+                empty.className = 'loading';
+                empty.textContent = 'No media items yet';
+                container.appendChild(empty);
                 return;
             }
 
-            container.innerHTML = items.map(item => `
-                <div class="media-item">
-                    <div class="media-item-header">
-                        <div class="media-item-title">${item.title}</div>
-                        <div class="media-item-actions">
-                            <button class="icon-btn edit" onclick="editMedia('${item.mediaId}')">✏️</button>
-                            <button class="icon-btn delete" onclick="deleteMedia('${item.mediaId}')">🗑️</button>
-                        </div>
-                    </div>
-                    <div class="media-item-meta">
-                        <span class="badge">${item.mediaType.toUpperCase()}</span>
-                        <span class="badge">${item.timePeriod}</span>
-                        <span class="badge">${item.startYear} - ${item.endYear}</span>
-                    </div>
-                    <div class="media-item-description">${item.description}</div>
-                </div>
-            `).join('');
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'media-item';
+
+                // Header row
+                const header = document.createElement('div');
+                header.className = 'media-item-header';
+
+                const title = document.createElement('div');
+                title.className = 'media-item-title';
+                title.textContent = item.title; // textContent never interprets HTML
+
+                const actions = document.createElement('div');
+                actions.className = 'media-item-actions';
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'icon-btn edit';
+                editBtn.textContent = '✏️';
+                editBtn.addEventListener('click', () => editMedia(item.mediaId));
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'icon-btn delete';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.addEventListener('click', () => deleteMedia(item.mediaId));
+
+                actions.appendChild(editBtn);
+                actions.appendChild(deleteBtn);
+                header.appendChild(title);
+                header.appendChild(actions);
+
+                // Meta badges
+                const meta = document.createElement('div');
+                meta.className = 'media-item-meta';
+
+                [item.mediaType.toUpperCase(), item.timePeriod, `${item.startYear} - ${item.endYear}`].forEach(text => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge';
+                    badge.textContent = text; // textContent, not innerHTML
+                    meta.appendChild(badge);
+                });
+
+                // Description
+                const desc = document.createElement('div');
+                desc.className = 'media-item-description';
+                desc.textContent = item.description;
+
+                card.appendChild(header);
+                card.appendChild(meta);
+                card.appendChild(desc);
+                container.appendChild(card);
+            });
         }
 
         // Form submission

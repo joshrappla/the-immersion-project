@@ -34,6 +34,7 @@ export default function AdminPanel() {
   const [showForm, setShowForm] = useState(false);
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginError, setLoginError] = useState('');
   
   // New filter/search states
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,7 +47,6 @@ export default function AdminPanel() {
   const loginStars = useMemo(() => generateStarfield(200), []);
   const adminStars = useMemo(() => generateStarfield(150), []);
 
-  const ADMIN_PASSWORD = 'immersion2024';
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   // Fetch media items
@@ -62,19 +62,42 @@ export default function AdminPanel() {
     }
   };
 
+  // Check existing session on mount (httpOnly cookie sent automatically)
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchMediaItems();
-    }
+    fetch('/api/admin/session')
+      .then(r => r.json())
+      .then(data => { if (data.authenticated) setIsAuthenticated(true); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) fetchMediaItems();
   }, [isAuthenticated]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-    } else {
-      alert('Incorrect password');
+    setLoginError('');
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        setIsAuthenticated(true);
+      } else {
+        setLoginError('Incorrect password');
+      }
+    } catch {
+      setLoginError('Login failed — please try again');
+    } finally {
+      setPassword(''); // clear from memory immediately
     }
+  };
+
+  const handleLogout = async () => {
+    await fetch('/api/admin/logout', { method: 'POST' });
+    setIsAuthenticated(false);
   };
 
   const handleDelete = async (mediaId: string) => {
@@ -239,6 +262,9 @@ export default function AdminPanel() {
               placeholder="Enter password"
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent placeholder-gray-500"
             />
+            {loginError && (
+              <p className="text-red-400 text-sm mb-3 text-center">{loginError}</p>
+            )}
             <button
               type="submit"
               className="w-full bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition"
@@ -305,6 +331,12 @@ export default function AdminPanel() {
               className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
             >
               + Add New
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg font-semibold hover:bg-gray-600 border border-gray-600 transition"
+            >
+              Logout
             </button>
           </div>
         </div>
