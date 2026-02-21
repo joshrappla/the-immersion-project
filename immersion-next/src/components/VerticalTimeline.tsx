@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
+
+const CountryMap = dynamic(() => import('./CountryMap'), { ssr: false });
 
 interface MediaItem {
   mediaId: string;
@@ -13,6 +16,9 @@ interface MediaItem {
   description: string;
   imageUrl: string;
   streamingUrl: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 // Generate starfield once
@@ -39,6 +45,7 @@ export default function VerticalTimeline() {
   const [showContributeModal, setShowContributeModal] = useState(false);
   const [contributeTab, setContributeTab] = useState<'media' | 'feedback'>('media');
   const [timelineScale, setTimelineScale] = useState(1);
+  const [currentView, setCurrentView] = useState<'timeline' | 'country'>('timeline');
   const [musicOn, setMusicOn] = useState(false);
   const pinchStartRef = useRef<{ distance: number; scale: number } | null>(null);
   const timelineContainerRef = useRef<HTMLDivElement>(null);
@@ -384,6 +391,24 @@ export default function VerticalTimeline() {
                 </label>
               </div>
 
+              {/* Country View Toggle */}
+              <button
+                onClick={() => {
+                  setCurrentView(v => v === 'country' ? 'timeline' : 'country');
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex items-center gap-3 w-full p-4 rounded-lg border transition ${
+                  currentView === 'country'
+                    ? 'bg-teal-900/60 text-teal-300 border-teal-700 hover:bg-teal-900'
+                    : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700'
+                }`}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 004 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-semibold">{currentView === 'country' ? 'Timeline View' : 'Country View'}</span>
+              </button>
+
               {/* Contribute */}
               <button
                 onClick={() => {
@@ -415,7 +440,15 @@ export default function VerticalTimeline() {
         </div>
       )}
 
+      {/* Country Map View */}
+      {currentView === 'country' && (
+        <div className="relative z-10" style={{ height: 'calc(100vh - 73px)' }}>
+          <CountryMap mediaItems={filteredItems} onSelectItem={setSelectedItem} />
+        </div>
+      )}
+
       {/* Vertical Timeline */}
+      {currentView === 'timeline' && (
       <div
         ref={timelineContainerRef}
         onTouchStart={handleTouchStart}
@@ -513,6 +546,7 @@ export default function VerticalTimeline() {
           </>
         )}
       </div>
+      )}
 
       {/* Media Detail Modal */}
       {selectedItem && (
@@ -692,6 +726,11 @@ export default function VerticalTimeline() {
                       <label className="block text-sm font-semibold text-white mb-2">Era (Optional)</label>
                       <input type="text" name="era" className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition" placeholder="Viking Age" />
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">Country / Region / Civilization (Optional)</label>
+                    <input type="text" name="country" className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-purple-600 transition" placeholder="e.g. Roman Empire, Feudal Japan, Ancient Egypt" />
+                    <p className="text-gray-500 text-xs mt-1">The country, civilization, or empire where this story is set — used to place it on the Country Map.</p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>

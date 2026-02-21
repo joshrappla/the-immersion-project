@@ -13,6 +13,9 @@ interface MediaItem {
   description: string;
   imageUrl: string;
   streamingUrl: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 // Generate starfield once - won't change on re-renders
@@ -140,6 +143,10 @@ export default function AdminPanel() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
+    const countryVal = (formData.get('country') as string)?.trim();
+    const latVal = formData.get('latitude') as string;
+    const lngVal = formData.get('longitude') as string;
+
     const item = {
       mediaId: editingItem?.mediaId || `media_${Date.now()}`,
       title: formData.get('title') as string,
@@ -150,6 +157,9 @@ export default function AdminPanel() {
       description: formData.get('description') as string,
       imageUrl: formData.get('imageUrl') as string,
       streamingUrl: formData.get('streamingUrl') as string,
+      ...(countryVal ? { country: countryVal } : {}),
+      ...(latVal ? { latitude: parseFloat(latVal) } : {}),
+      ...(lngVal ? { longitude: parseFloat(lngVal) } : {}),
     };
 
     try {
@@ -467,6 +477,14 @@ export default function AdminPanel() {
                       <span className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-sm border border-gray-700">
                         {item.startYear} - {item.endYear}
                       </span>
+                      {item.country && (
+                        <span className="px-3 py-1 bg-teal-900/50 text-teal-300 rounded-full text-sm border border-teal-700 flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 004 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {item.country}
+                        </span>
+                      )}
                     </div>
                     <p className="text-gray-400 text-sm line-clamp-2">
                       {item.description}
@@ -601,6 +619,53 @@ export default function AdminPanel() {
                     placeholder="https://..."
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-purple-600 focus:outline-none"
                   />
+                </div>
+
+                {/* Country Map Fields */}
+                <div className="pt-2 border-t border-gray-700">
+                  <p className="text-sm font-semibold text-teal-400 mb-3 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 004 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Country Map (Optional)
+                  </p>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-gray-300">Country / Region / Civilization</label>
+                      <input
+                        name="country"
+                        defaultValue={editingItem?.country}
+                        placeholder="e.g. Roman Empire, Feudal Japan, Ancient Egypt"
+                        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                      />
+                      <p className="text-gray-500 text-xs mt-1">The country, civilization, or empire where this story is set.</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1 text-gray-300">Latitude</label>
+                        <input
+                          name="latitude"
+                          type="number"
+                          step="any"
+                          defaultValue={editingItem?.latitude}
+                          placeholder="e.g. 41.9"
+                          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1 text-gray-300">Longitude</label>
+                        <input
+                          name="longitude"
+                          type="number"
+                          step="any"
+                          defaultValue={editingItem?.longitude}
+                          placeholder="e.g. 12.5"
+                          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-gray-500 text-xs">Latitude &amp; Longitude determine the dot position on the world map. Leave blank if unknown.</p>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
