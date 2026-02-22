@@ -1,7 +1,31 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
+import { getCountriesForPeriod } from '@/utils/regionMappings';
+
+// Maps ISO 3166-1 alpha-2 codes to the country name strings used in
+// the countries-110m.json topojson (Natural Earth "name" property).
+const ISO_A2_TO_NAME: Record<string, string> = {
+  AU: 'Australia',
+  CA: 'Canada',
+  DE: 'Germany',
+  DK: 'Denmark',
+  EG: 'Egypt',
+  ES: 'Spain',
+  FR: 'France',
+  GB: 'United Kingdom',
+  GR: 'Greece',
+  IE: 'Ireland',
+  IN: 'India',
+  IS: 'Iceland',
+  IT: 'Italy',
+  NO: 'Norway',
+  NZ: 'New Zealand',
+  SE: 'Sweden',
+  TR: 'Turkey',
+  ZA: 'South Africa',
+};
 
 const GEO_URL = '/countries-110m.json';
 
@@ -23,6 +47,9 @@ export interface MediaItem {
 interface CountryMapProps {
   mediaItems: MediaItem[];
   onSelectItem: (item: MediaItem) => void;
+  /** Additional ISO 3166-1 alpha-2 codes to highlight, beyond what is derived
+   *  from the mediaItems' country fields. */
+  highlightedCountryCodes?: string[];
 }
 
 const getMediaColor = (type: string) => {
@@ -34,12 +61,30 @@ const getMediaColor = (type: string) => {
   }
 };
 
-export default function CountryMap({ mediaItems, onSelectItem }: CountryMapProps) {
+export default function CountryMap({ mediaItems, onSelectItem, highlightedCountryCodes = [] }: CountryMapProps) {
   const [tooltip, setTooltip] = useState<{ item: MediaItem; x: number; y: number } | null>(null);
   const [position, setPosition] = useState<{ coordinates: [number, number]; zoom: number }>({
     coordinates: [0, 20],
     zoom: 1,
   });
+
+  // Derive the set of topojson country names to highlight.
+  // Sources: each item's `country` field (mapped through REGION_MAPPINGS) +
+  // any explicitly passed highlightedCountryCodes.
+  const highlightedNames = useMemo(() => {
+    const codes = new Set<string>([...highlightedCountryCodes]);
+    mediaItems.forEach((item) => {
+      if (item.country) {
+        getCountriesForPeriod(item.country).forEach((c) => codes.add(c));
+      }
+    });
+    const names = new Set<string>();
+    codes.forEach((code) => {
+      const name = ISO_A2_TO_NAME[code.toUpperCase()];
+      if (name) names.add(name);
+    });
+    return names;
+  }, [mediaItems, highlightedCountryCodes]);
 
   const mappedItems = mediaItems.filter(
     (item) => item.latitude !== undefined && item.longitude !== undefined
@@ -71,6 +116,15 @@ export default function CountryMap({ mediaItems, onSelectItem }: CountryMapProps
             <div className="w-3 h-3 rounded-full bg-[#3b82f6]" />
             <span className="text-xs text-gray-300">TV Shows</span>
           </div>
+          {highlightedNames.size > 0 && (
+            <>
+              <div className="border-t border-white/10 my-1" />
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-[#1a3f6f] border border-[#3b82f6]" />
+                <span className="text-xs text-gray-300">Region</span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Zoom hint */}
@@ -102,20 +156,26 @@ export default function CountryMap({ mediaItems, onSelectItem }: CountryMapProps
           >
             <Geographies geography={GEO_URL}>
               {({ geographies }) =>
-                geographies.map((geo) => (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    fill="#1e293b"
-                    stroke="#334155"
-                    strokeWidth={0.5}
-                    style={{
-                      default: { outline: 'none' },
-                      hover: { fill: '#273548', outline: 'none' },
-                      pressed: { outline: 'none' },
-                    }}
-                  />
-                ))
+                geographies.map((geo) => {
+                  const isHighlighted = highlightedNames.has(geo.properties.name as string);
+                  return (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      fill={isHighlighted ? '#1a3f6f' : '#1e293b'}
+                      stroke={isHighlighted ? '#3b82f6' : '#334155'}
+                      strokeWidth={isHighlighted ? 0.8 : 0.5}
+                      style={{
+                        default: { outline: 'none' },
+                        hover: {
+                          fill: isHighlighted ? '#1e4d87' : '#273548',
+                          outline: 'none',
+                        },
+                        pressed: { outline: 'none' },
+                      }}
+                    />
+                  );
+                })
               }
             </Geographies>
 
