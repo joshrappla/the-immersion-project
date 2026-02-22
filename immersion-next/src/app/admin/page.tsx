@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import RegionMappingsPanel from '@/components/RegionMappingsPanel';
 
 interface MediaItem {
   mediaId: string;
@@ -39,6 +40,9 @@ export default function AdminPanel() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState('');
   
+  // Active admin tab
+  const [activeTab, setActiveTab] = useState<'media' | 'regions'>('media');
+
   // New filter/search states
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMediaType, setFilterMediaType] = useState('');
@@ -334,15 +338,17 @@ export default function AdminPanel() {
             >
               View Timeline
             </Link>
-            <button
-              onClick={() => {
-                setShowForm(true);
-                setEditingItem(null);
-              }}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
-            >
-              + Add New
-            </button>
+            {activeTab === 'media' && (
+              <button
+                onClick={() => {
+                  setShowForm(true);
+                  setEditingItem(null);
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+              >
+                + Add New
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg font-semibold hover:bg-gray-600 border border-gray-600 transition"
@@ -351,10 +357,35 @@ export default function AdminPanel() {
             </button>
           </div>
         </div>
+
+        {/* Tab navigation */}
+        <div className="flex gap-1 mt-5 border-t border-gray-700 pt-4">
+          {(
+            [
+              { id: 'media', label: 'Media Items' },
+              { id: 'regions', label: 'Region Mappings' },
+            ] as { id: 'media' | 'regions'; label: string }[]
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+                activeTab === tab.id
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 hover:text-gray-200'
+              }`}
+            >
+              {tab.label}
+              {tab.id === 'media' && mediaItems.length > 0 && (
+                <span className="ml-2 text-xs opacity-70">({mediaItems.length})</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Search and Filter Bar */}
-      <div className="relative z-10 bg-gray-900/60 backdrop-blur-sm border-b border-gray-700 p-4">
+      {/* Search and Filter Bar — media tab only */}
+      {activeTab === 'media' && <div className="relative z-10 bg-gray-900/60 backdrop-blur-sm border-b border-gray-700 p-4">
         <div className="container mx-auto">
           <div className="flex flex-wrap gap-4 items-center">
             {/* Search */}
@@ -434,10 +465,17 @@ export default function AdminPanel() {
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
-      {/* Content */}
-      <div className="relative z-10 container mx-auto p-6">
+      {/* Region Mappings tab content */}
+      {activeTab === 'regions' && (
+        <div className="relative z-10 container mx-auto p-6">
+          <RegionMappingsPanel />
+        </div>
+      )}
+
+      {/* Media Items tab content */}
+      {activeTab === 'media' && <div className="relative z-10 container mx-auto p-6">
         {loading ? (
           <div className="text-center text-gray-400">Loading...</div>
         ) : filteredItems.length === 0 ? (
@@ -515,7 +553,7 @@ export default function AdminPanel() {
             ))}
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Add/Edit Form Modal */}
       {showForm && (

@@ -23,55 +23,57 @@ export const REGION_MAPPINGS: Record<string, string[]> = {
 };
 
 // ---------------------------------------------------------------------------
-// Static lookup
+// Static + custom lookup
 // ---------------------------------------------------------------------------
 
 /**
- * Returns an array of ISO 3166-1 alpha-2 country codes for a given period /
- * empire / civilisation string.
+ * Returns ISO 3166-1 alpha-2 country codes for a given time period string.
  *
- * Resolution order:
- *  1. Exact key match in REGION_MAPPINGS
- *  2. Case-insensitive key match in REGION_MAPPINGS
- *  3. If the string is already a 2-character code, return it as-is
- *  4. Empty array → caller should try the AI fallback
+ * Resolution order (highest → lowest priority):
+ *  1. Custom overrides stored in localStorage (user-managed)
+ *  2. Exact key match in REGION_MAPPINGS
+ *  3. Case-insensitive key match in REGION_MAPPINGS
+ *  4. Treat the input as a bare 2-character ISO code
+ *  5. Empty array → caller should fall back to the AI lookup
  */
 export function getCountriesForPeriod(timePeriod: string): string[] {
   if (!timePeriod) return [];
 
-  // 1. Exact match
-  if (REGION_MAPPINGS[timePeriod]) {
-    return REGION_MAPPINGS[timePeriod];
+  // 1. Custom overrides (client-side only, highest priority)
+  if (typeof window !== 'undefined') {
+    const custom = getCustomMappings();
+    const customEntry =
+      custom[timePeriod] ??
+      custom[
+        Object.keys(custom).find((k) => k.toLowerCase() === timePeriod.toLowerCase()) ?? ''
+      ];
+    if (customEntry?.countries?.length) return customEntry.countries;
   }
 
-  // 2. Case-insensitive match
+  // 2. Exact static match
+  if (REGION_MAPPINGS[timePeriod]) return REGION_MAPPINGS[timePeriod];
+
+  // 3. Case-insensitive static match
   const lower = timePeriod.toLowerCase();
-  const caseInsensitiveKey = Object.keys(REGION_MAPPINGS).find(
-    (k) => k.toLowerCase() === lower
-  );
-  if (caseInsensitiveKey) {
-    return REGION_MAPPINGS[caseInsensitiveKey];
-  }
+  const ciKey = Object.keys(REGION_MAPPINGS).find((k) => k.toLowerCase() === lower);
+  if (ciKey) return REGION_MAPPINGS[ciKey];
 
-  // 3. Treat as a bare ISO alpha-2 code
-  if (timePeriod.trim().length === 2) {
-    return [timePeriod.trim().toUpperCase()];
-  }
+  // 4. Bare ISO alpha-2 code
+  if (timePeriod.trim().length === 2) return [timePeriod.trim().toUpperCase()];
 
   return [];
 }
 
 // ---------------------------------------------------------------------------
-// localStorage cache helpers (client-side only)
+// localStorage helpers — AI cache  (key: "regionCache")
 // ---------------------------------------------------------------------------
 
-const CACHE_STORAGE_KEY = 'regionCache';
+const AI_CACHE_KEY = 'regionCache';
 
-/** Read the full cache object from localStorage (safe — returns {} on error). */
-function readCache(): Record<string, RegionCacheEntry> {
+function readAICache(): Record<string, RegionCacheEntry> {
   if (typeof window === 'undefined') return {};
   try {
-    return JSON.parse(localStorage.getItem(CACHE_STORAGE_KEY) ?? '{}') as Record<
+    return JSON.parse(localStorage.getItem(AI_CACHE_KEY) ?? '{}') as Record<
       string,
       RegionCacheEntry
     >;
@@ -80,25 +82,97 @@ function readCache(): Record<string, RegionCacheEntry> {
   }
 }
 
-/**
- * Returns the cached `RegionCacheEntry` for a time period, or `null` if it
- * has not been resolved yet.
- */
+/** Returns the cached entry for a period, or null on a miss. */
 export function getCachedRegion(timePeriod: string): RegionCacheEntry | null {
-  return readCache()[timePeriod] ?? null;
+  return readAICache()[timePeriod] ?? null;
 }
 
-/**
- * Persists an AI-resolved `RegionCacheEntry` to localStorage so subsequent
- * page loads skip the API round-trip.
- */
+/** Persists an AI-resolved entry to localStorage. */
 export function setCachedRegion(timePeriod: string, entry: RegionCacheEntry): void {
   if (typeof window === 'undefined') return;
   try {
-    const cache = readCache();
+    const cache = readAICache();
     cache[timePeriod] = entry;
-    localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(cache));
+    localStorage.setItem(AI_CACHE_KEY, JSON.stringify(cache));
   } catch {
-    // Storage quota exceeded or private-browsing restriction — silently ignore.
+    /* quota / private-browsing — ignore */
+  }
+}
+
+/** Returns every AI-cached entry as a plain object. */
+export function getAllCachedRegions(): Record<string, RegionCacheEntry> {
+  return readAICache();
+}
+
+/** Removes a single AI-cached entry. */
+export function deleteCachedRegion(timePeriod: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const cache = readAICache();
+    delete cache[timePeriod];
+    localStorage.setItem(AI_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Removes the entire AI cache. */
+export function clearAICache(): void {
+  if (typeof window !== 'undefined') {
+    try { localStorage.removeItem(AI_CACHE_KEY); } catch { /* ignore */ }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// localStorage helpers — custom mappings  (key: "customRegionMappings")
+// ---------------------------------------------------------------------------
+
+const CUSTOM_MAPPINGS_KEY = 'customRegionMappings';
+
+function readCustom(): Record<string, RegionCacheEntry> {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(localStorage.getItem(CUSTOM_MAPPINGS_KEY) ?? '{}') as Record<
+      string,
+      RegionCacheEntry
+    >;
+  } catch {
+    return {};
+  }
+}
+
+/** Returns every custom mapping as a plain object. */
+export function getCustomMappings(): Record<string, RegionCacheEntry> {
+  return readCustom();
+}
+
+/** Saves or updates a custom mapping entry. */
+export function setCustomMapping(timePeriod: string, entry: RegionCacheEntry): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const custom = readCustom();
+    custom[timePeriod] = entry;
+    localStorage.setItem(CUSTOM_MAPPINGS_KEY, JSON.stringify(custom));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Removes a single custom mapping entry. */
+export function deleteCustomMapping(timePeriod: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const custom = readCustom();
+    delete custom[timePeriod];
+    localStorage.setItem(CUSTOM_MAPPINGS_KEY, JSON.stringify(custom));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Removes all custom mappings. */
+export function clearCustomMappings(): void {
+  if (typeof window !== 'undefined') {
+    try { localStorage.removeItem(CUSTOM_MAPPINGS_KEY); } catch { /* ignore */ }
   }
 }
