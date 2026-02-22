@@ -81,12 +81,13 @@ export default function AdminPanel() {
     e.preventDefault();
     setLoginError('');
     try {
-      const res = await fetch('/api/admin/login', {
+      const res = await fetch('/api/admin/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
       });
-      if (res.ok) {
+      const data = await res.json();
+      if (data.authenticated) {
         setIsAuthenticated(true);
       } else {
         setLoginError('Incorrect password');
