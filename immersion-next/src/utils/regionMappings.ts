@@ -8,6 +8,18 @@ export interface RegionCacheEntry {
   description: string;
 }
 
+/** Rich result returned by {@link getRegionInfo}. */
+export interface RegionInfo {
+  /** How the timePeriod string was resolved. */
+  type: 'period' | 'country' | 'unknown';
+  /** ISO 3166-1 alpha-2 codes for the resolved countries. */
+  countries: string[];
+  /** Approximate historical timeframe, if known. */
+  timeframe?: string;
+  /** The canonical name of the period or country (equals the input for countries). */
+  name: string;
+}
+
 // ---------------------------------------------------------------------------
 // Static mappings
 // ---------------------------------------------------------------------------
@@ -20,6 +32,22 @@ export const REGION_MAPPINGS: Record<string, string[]> = {
   'British Empire':  ['GB', 'IN', 'CA', 'AU', 'ZA', 'NZ'],
   'Medieval Europe': ['FR', 'DE', 'IT', 'ES', 'GB'],
   'Ancient Greece':  ['GR', 'TR', 'IT'],
+  'Ottoman Empire':  ['TR', 'EG', 'GR', 'RS', 'BG', 'HU', 'RO', 'SA', 'IQ', 'SY', 'LY', 'TN', 'DZ', 'JO'],
+  'Mongol Empire':   ['MN', 'CN', 'RU', 'KZ', 'KG', 'UZ', 'TM', 'AF', 'IR', 'UA'],
+};
+
+/**
+ * Approximate timeframes for every key in {@link REGION_MAPPINGS}.
+ * Used by {@link getRegionInfo} and the admin Region Mappings panel.
+ */
+export const REGION_TIMEFRAMES: Record<string, string> = {
+  'Roman Empire':    '27 BC – 476 AD',
+  'Viking Age':      '793 – 1066 AD',
+  'British Empire':  '1583 – 1997',
+  'Medieval Europe': '500 – 1500 AD',
+  'Ancient Greece':  '800 – 146 BC',
+  'Ottoman Empire':  '1299 – 1922',
+  'Mongol Empire':   '1206 – 1368',
 };
 
 // ---------------------------------------------------------------------------
@@ -62,6 +90,59 @@ export function getCountriesForPeriod(timePeriod: string): string[] {
   if (timePeriod.trim().length === 2) return [timePeriod.trim().toUpperCase()];
 
   return [];
+}
+
+/**
+ * Returns rich information about a time period string.
+ *
+ * Resolution order (same as {@link getCountriesForPeriod}):
+ *  1. Custom localStorage overrides
+ *  2. Static REGION_MAPPINGS
+ *  3. Bare ISO alpha-2 country code
+ *  4. Unknown (no mapping found)
+ */
+export function getRegionInfo(timePeriod: string): RegionInfo {
+  if (!timePeriod) return { type: 'unknown', countries: [], name: '' };
+
+  // 1. Custom overrides
+  if (typeof window !== 'undefined') {
+    const custom = getCustomMappings();
+    const ciKey = Object.keys(custom).find(
+      (k) => k.toLowerCase() === timePeriod.toLowerCase()
+    );
+    const entry = custom[timePeriod] ?? (ciKey ? custom[ciKey] : undefined);
+    if (entry?.countries?.length) {
+      return {
+        type: 'period',
+        countries: entry.countries,
+        timeframe: entry.timeframe || undefined,
+        name: timePeriod,
+      };
+    }
+  }
+
+  // 2. Static REGION_MAPPINGS (exact + case-insensitive)
+  const staticKey =
+    REGION_MAPPINGS[timePeriod] !== undefined
+      ? timePeriod
+      : Object.keys(REGION_MAPPINGS).find(
+          (k) => k.toLowerCase() === timePeriod.toLowerCase()
+        );
+  if (staticKey && REGION_MAPPINGS[staticKey]) {
+    return {
+      type: 'period',
+      countries: REGION_MAPPINGS[staticKey],
+      timeframe: REGION_TIMEFRAMES[staticKey],
+      name: staticKey,
+    };
+  }
+
+  // 3. Bare ISO alpha-2 code
+  if (timePeriod.trim().length === 2) {
+    return { type: 'country', countries: [timePeriod.trim().toUpperCase()], name: timePeriod.trim().toUpperCase() };
+  }
+
+  return { type: 'unknown', countries: [], name: timePeriod };
 }
 
 // ---------------------------------------------------------------------------
