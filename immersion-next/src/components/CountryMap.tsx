@@ -1,8 +1,13 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
-import { getCountriesForPeriod } from '@/utils/regionMappings';
+import {
+  getCountriesForPeriod,
+  getCachedRegion,
+  setCachedRegion,
+  type RegionCacheEntry,
+} from '@/utils/regionMappings';
 
 // Maps ISO 3166-1 alpha-2 codes to the country name strings used in
 // the countries-110m.json topojson (Natural Earth "name" property).
@@ -68,6 +73,63 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
     zoom: 1,
   });
 
+  // AI-resolved regions: country string → ISO alpha-2 codes returned by Claude
+  const [aiRegions, setAiRegions] = useState<Record<string, string[]>>({});
+  // Country strings currently being looked up via the API
+  const [loadingRegions, setLoadingRegions] = useState<Set<string>>(new Set());
+  // Tracks which country strings have already been requested (prevents duplicates
+  // when mediaItems reference changes without new countries being added)
+  const requestedRef = useRef(new Set<string>());
+
+  useEffect(() => {
+    const toFetch: string[] = [];
+
+    mediaItems.forEach((item) => {
+      if (!item.country) return;
+      // Already has a static mapping → no AI needed
+      if (getCountriesForPeriod(item.country).length > 0) return;
+      // Already requested or resolved this session
+      if (requestedRef.current.has(item.country)) return;
+
+      // Check localStorage cache first
+      const cached = getCachedRegion(item.country);
+      if (cached) {
+        requestedRef.current.add(item.country);
+        setAiRegions((prev) => ({ ...prev, [item.country!]: cached.countries }));
+        return;
+      }
+
+      toFetch.push(item.country);
+    });
+
+    if (toFetch.length === 0) return;
+
+    // Mark all as requested before firing async calls to prevent races
+    toFetch.forEach((c) => requestedRef.current.add(c));
+    setLoadingRegions((prev) => new Set([...prev, ...toFetch]));
+
+    toFetch.forEach(async (country) => {
+      try {
+        const res = await fetch(
+          `/api/region-lookup?period=${encodeURIComponent(country)}`
+        );
+        if (res.ok) {
+          const data = (await res.json()) as RegionCacheEntry;
+          setCachedRegion(country, data);
+          setAiRegions((prev) => ({ ...prev, [country]: data.countries }));
+        }
+      } catch {
+        // Network / API error — leave this country unhighlighted (no crash)
+      } finally {
+        setLoadingRegions((prev) => {
+          const next = new Set(prev);
+          next.delete(country);
+          return next;
+        });
+      }
+    });
+  }, [mediaItems]);
+
   // Derive the set of topojson country names to highlight.
   // Sources: each item's `country` field (mapped through REGION_MAPPINGS) +
   // any explicitly passed highlightedCountryCodes.
@@ -75,7 +137,10 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
     const codes = new Set<string>([...highlightedCountryCodes]);
     mediaItems.forEach((item) => {
       if (item.country) {
+        // Static REGION_MAPPINGS
         getCountriesForPeriod(item.country).forEach((c) => codes.add(c));
+        // AI-resolved codes (async, populated once the API call finishes)
+        (aiRegions[item.country] ?? []).forEach((c) => codes.add(c));
       }
     });
     const names = new Set<string>();
@@ -84,7 +149,7 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
       if (name) names.add(name);
     });
     return names;
-  }, [mediaItems, highlightedCountryCodes]);
+  }, [mediaItems, highlightedCountryCodes, aiRegions]);
 
   const mappedItems = mediaItems.filter(
     (item) => item.latitude !== undefined && item.longitude !== undefined
@@ -131,6 +196,31 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
         <div className="absolute top-3 right-3 z-20 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/10">
           <p className="text-gray-400 text-xs">Scroll to zoom · Drag to pan</p>
         </div>
+
+        {/* AI region loading indicator */}
+        {loadingRegions.size > 0 && (
+          <div className="absolute bottom-3 right-3 z-20 flex items-center gap-2 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 border border-blue-500/30">
+            <svg
+              className="animate-spin w-3 h-3 text-blue-400 flex-shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12" cy="12" r="10"
+                stroke="currentColor" strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              />
+            </svg>
+            <p className="text-blue-400 text-xs">
+              AI determining region{loadingRegions.size > 1 ? 's' : ''}…
+            </p>
+          </div>
+        )}
 
         {/* Mapped item count badge */}
         <div className="absolute bottom-3 left-3 z-20 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/10">
