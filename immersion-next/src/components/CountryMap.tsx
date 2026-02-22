@@ -4,11 +4,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import {
   getCountriesForPeriod,
-  getCachedRegion,
-  setCachedRegion,
   REGION_MAPPINGS,
-  type RegionCacheEntry,
 } from '@/utils/regionMappings';
+import { getRegionsFromAI } from '@/lib/regionAI';
 
 // Maps ISO 3166-1 alpha-2 codes to the country name strings used in
 // the countries-110m.json topojson (Natural Earth "name" property).
@@ -131,40 +129,29 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
 
     mediaItems.forEach((item) => {
       if (!item.country) return;
-      // Already has a static mapping → no AI needed
+      // Already resolved by static REGION_MAPPINGS → no async work needed
       if (getCountriesForPeriod(item.country).length > 0) return;
-      // Already requested or resolved this session
+      // Already requested (or resolved) this session → skip
       if (requestedRef.current.has(item.country)) return;
-
-      // Check localStorage cache first
-      const cached = getCachedRegion(item.country);
-      if (cached) {
-        requestedRef.current.add(item.country);
-        setAiRegions((prev) => ({ ...prev, [item.country!]: cached.countries }));
-        return;
-      }
-
       toFetch.push(item.country);
     });
 
     if (toFetch.length === 0) return;
 
-    // Mark all as requested before firing async calls to prevent races
+    // Mark all as in-flight before firing to prevent duplicate requests on re-render
     toFetch.forEach((c) => requestedRef.current.add(c));
     setLoadingRegions((prev) => new Set([...prev, ...toFetch]));
 
     toFetch.forEach(async (country) => {
       try {
-        const res = await fetch(
-          `/api/region-lookup?period=${encodeURIComponent(country)}`
-        );
-        if (res.ok) {
-          const data = (await res.json()) as RegionCacheEntry;
-          setCachedRegion(country, data);
-          setAiRegions((prev) => ({ ...prev, [country]: data.countries }));
+        // getRegionsFromAI handles the full pipeline:
+        //   REGION_MAPPINGS → regionCache_<period> localStorage → AI API → fallback
+        const result = await getRegionsFromAI(country);
+        if (result.countries.length > 0) {
+          setAiRegions((prev) => ({ ...prev, [country]: result.countries }));
         }
-      } catch {
-        // Network / API error — leave this country unhighlighted (no crash)
+      } catch (err) {
+        console.error('[CountryMap] region lookup failed for', country, err);
       } finally {
         setLoadingRegions((prev) => {
           const next = new Set(prev);
@@ -309,7 +296,7 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
               />
             </svg>
             <p className="text-blue-400 text-xs">
-              AI determining region{loadingRegions.size > 1 ? 's' : ''}…
+              Analyzing historical period{loadingRegions.size > 1 ? 's' : ''}…
             </p>
           </div>
         )}

@@ -2,19 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 
-const SYSTEM_PROMPT = `You are a geographic historian. Given a historical time period, empire, or civilization name, identify which modern countries correspond to that region. Always respond with a valid JSON object only — no markdown fences, no explanation.
-
-JSON shape:
+/** Build the exact prompt template requested, with the period interpolated. */
+function buildPrompt(timePeriod: string): string {
+  return `You are a historical geography expert. Given: "${timePeriod}"
+Determine:
+	1.	Is this a specific COUNTRY, an EMPIRE/KINGDOM, or a historical ERA/PERIOD?
+	2.	What modern-day country codes (ISO 3166-1 alpha-2) should be highlighted on a map?
+	3.	What timeframe does this represent?
+Respond ONLY with valid JSON, no markdown:
 {
-  "countries": ["XX", "YY"],
-  "timeframe": "approximate dates (e.g. 27 BC – 476 AD)",
-  "description": "brief one-line description"
+"type": "country" | "empire" | "era",
+"countries": ["US", "FR", "GB"],
+"timeframe": "793-1066 AD",
+"description": "Brief context (max 20 words)"
 }
-
-Rules:
-- Use ISO 3166-1 alpha-2 codes only (2-letter uppercase codes).
-- Include only countries that were significantly part of this civilization or period.
-- If the input is unrecognizable as a historical period or place, return {"countries":[],"timeframe":"unknown","description":"unknown"}.`;
+Examples:
+	∙	"France" → {"type":"country","countries":["FR"],"timeframe":"","description":"Modern European nation"}
+	∙	"Aztec Empire" → {"type":"empire","countries":["MX"],"timeframe":"1345-1521","description":"Pre-Columbian Mesoamerican civilization in central Mexico"}
+	∙	"Silk Road" → {"type":"era","countries":["CN","KZ","UZ","IR","TR","IT"],"timeframe":"130 BC-1453 AD","description":"Ancient trade routes connecting East and West"}`;
+}
 
 export async function GET(req: NextRequest) {
   const period = req.nextUrl.searchParams.get('period')?.trim();
@@ -28,8 +34,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 503 });
   }
 
-  const userMessage = `Time period / civilization: "${period}"`;
-
   let raw: string;
   try {
     const response = await fetch(ANTHROPIC_API_URL, {
@@ -40,10 +44,9 @@ export async function GET(req: NextRequest) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 256,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userMessage }],
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: buildPrompt(period) }],
       }),
     });
 
@@ -54,21 +57,24 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await response.json();
-    raw = data.content?.[0]?.text ?? '';
+    raw = (data.content?.[0]?.text ?? '') as string;
   } catch (err) {
     console.error('region-lookup fetch failed', err);
     return NextResponse.json({ error: 'Network error contacting AI' }, { status: 502 });
   }
 
-  // Parse JSON from the model's response
+  // Parse JSON — strip markdown code fences if the model adds them
   try {
-    // Strip any accidental markdown code fences the model may produce
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-    const parsed = JSON.parse(cleaned) as {
-      countries?: unknown;
-      timeframe?: unknown;
-      description?: unknown;
-    };
+    const cleaned = raw
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```\s*$/i, '')
+      .trim();
+    const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+
+    const type =
+      parsed.type === 'country' || parsed.type === 'empire' || parsed.type === 'era'
+        ? parsed.type
+        : 'era';
 
     const countries = Array.isArray(parsed.countries)
       ? (parsed.countries as unknown[])
@@ -77,12 +83,12 @@ export async function GET(req: NextRequest) {
       : [];
 
     return NextResponse.json({
+      type,
       countries,
       timeframe: typeof parsed.timeframe === 'string' ? parsed.timeframe : '',
       description: typeof parsed.description === 'string' ? parsed.description : '',
     });
   } catch {
-    // Model returned non-JSON — treat as unknown region
-    return NextResponse.json({ countries: [], timeframe: '', description: '' });
+    return NextResponse.json({ type: 'era', countries: [], timeframe: '', description: '' });
   }
 }
