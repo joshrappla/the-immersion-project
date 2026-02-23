@@ -29,18 +29,26 @@ function checkRateLimit(ip: string): boolean {
 // ---------------------------------------------------------------------------
 
 /** Strip control characters and limit length to prevent prompt injection. */
-function sanitizePeriod(raw: string): string {
+function sanitizeString(raw: string, maxLen = 100): string {
   return raw
     .replace(/[\x00-\x1f\x7f-\x9f]/g, '') // control chars
     .replace(/[<>]/g, '')                   // HTML angle brackets
     .trim()
-    .slice(0, 100);                          // hard max length
+    .slice(0, maxLen);
+}
+
+/** Parse an optional integer query param; returns null if missing or invalid. */
+function parseIntParam(raw: string | null): number | null {
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  return isFinite(n) ? n : null;
 }
 
 // ---------------------------------------------------------------------------
-// Prompt builder
+// Prompt builders
 // ---------------------------------------------------------------------------
 
+/** Basic prompt — used when no year range is provided (legacy path). */
 function buildPrompt(timePeriod: string): string {
   return `You are a historical geography expert. Given: "${timePeriod}"
 Determine:
@@ -52,12 +60,57 @@ Respond ONLY with valid JSON, no markdown:
 "type": "country" | "empire" | "era",
 "countries": ["US", "FR", "GB"],
 "timeframe": "793-1066 AD",
-"description": "Brief context (max 20 words)"
+"description": "Brief context (max 20 words)",
+"confidence": "high" | "medium" | "low",
+"reasoning": "One sentence explaining country selection",
+"suggestions": ["Alternative interpretation if ambiguous"]
 }
 Examples:
-	∙	"France" → {"type":"country","countries":["FR"],"timeframe":"","description":"Modern European nation"}
-	∙	"Aztec Empire" → {"type":"empire","countries":["MX"],"timeframe":"1345-1521","description":"Pre-Columbian Mesoamerican civilization in central Mexico"}
-	∙	"Silk Road" → {"type":"era","countries":["CN","KZ","UZ","IR","TR","IT"],"timeframe":"130 BC-1453 AD","description":"Ancient trade routes connecting East and West"}`;
+	∙	"France" → {"type":"country","countries":["FR"],"timeframe":"","description":"Modern European nation","confidence":"high","reasoning":"Direct country name match","suggestions":[]}
+	∙	"Aztec Empire" → {"type":"empire","countries":["MX"],"timeframe":"1345-1521","description":"Pre-Columbian Mesoamerican civilization in central Mexico","confidence":"high","reasoning":"Aztec civilization was based in central Mexico","suggestions":[]}
+	∙	"Silk Road" → {"type":"era","countries":["CN","KZ","UZ","IR","TR","IT"],"timeframe":"130 BC-1453 AD","description":"Ancient trade routes connecting East and West","confidence":"medium","reasoning":"Trade routes crossed multiple modern countries","suggestions":[]}`;
+}
+
+/** Year-aware prompt — used when startYear / endYear are provided. */
+function buildYearAwarePrompt(
+  era: string,
+  startYear: number,
+  endYear: number,
+  title?: string,
+): string {
+  const yearLabel = (y: number) =>
+    y < 0 ? `${Math.abs(y)} BC` : `${y} AD`;
+
+  const titleLine = title ? `\n* Media Title: "${title}"` : '';
+
+  return `You are a historical geography expert. Given:
+* Era/Period: "${era}"
+* Time Range: ${yearLabel(startYear)} to ${yearLabel(endYear)}${titleLine}
+
+Determine which modern-day countries/regions were part of or affected by this historical context DURING THE SPECIFIC TIME RANGE given.
+
+Consider:
+* Empires expanded and contracted over time — use the SPECIFIC years, not the empire's full lifespan
+* Wars and conflicts involved multiple nations simultaneously
+* Trade routes and cultural movements spread across many regions
+* Media titles may contain location clues (e.g. "Battle of Stalingrad" → Russia)
+
+Respond ONLY with valid JSON, no markdown:
+{
+  "type": "country" | "empire" | "era",
+  "countries": ["XX", "YY", "ZZ"],
+  "timeframe": "startYear–endYear (human readable)",
+  "description": "Brief context, max 20 words",
+  "confidence": "high" | "medium" | "low",
+  "reasoning": "One or two sentences explaining why these specific countries for this specific time range",
+  "primaryRegion": "XX",
+  "suggestions": ["Alternative if ambiguous"]
+}
+
+Confidence guide:
+* "high" — era name and year range uniquely identify a well-documented territory
+* "medium" — reasonable inference but some ambiguity
+* "low" — very broad range (>500 years), unknown era, or conflicting signals`;
 }
 
 // ---------------------------------------------------------------------------
@@ -111,11 +164,17 @@ export async function GET(req: NextRequest) {
 
   // ── Input validation & sanitization ───────────────────────────────────────
   const rawPeriod = req.nextUrl.searchParams.get('period') ?? '';
-  const period = sanitizePeriod(rawPeriod);
+  const period = sanitizeString(rawPeriod, 100);
 
   if (!period) {
     return NextResponse.json({ error: 'Missing or empty period parameter' }, { status: 400 });
   }
+
+  // Optional year-range params for year-aware inference
+  const startYear = parseIntParam(req.nextUrl.searchParams.get('startYear'));
+  const endYear   = parseIntParam(req.nextUrl.searchParams.get('endYear'));
+  const rawTitle  = req.nextUrl.searchParams.get('title') ?? '';
+  const title     = rawTitle ? sanitizeString(rawTitle, 120) : undefined;
 
   // ── API key ────────────────────────────────────────────────────────────────
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -136,8 +195,16 @@ export async function GET(req: NextRequest) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 300,
-        messages: [{ role: 'user', content: buildPrompt(period) }],
+        max_tokens: 500,
+        messages: [
+          {
+            role: 'user',
+            content:
+              startYear !== null && endYear !== null
+                ? buildYearAwarePrompt(period, startYear, endYear, title)
+                : buildPrompt(period),
+          },
+        ],
       }),
     });
 
@@ -188,7 +255,24 @@ export async function GET(req: NextRequest) {
     const description =
       typeof parsed.description === 'string' ? parsed.description.slice(0, 200) : '';
 
-    return NextResponse.json({ type, countries, timeframe, description });
+    // New year-aware fields (may be absent in legacy responses)
+    const confidence =
+      parsed.confidence === 'high' || parsed.confidence === 'medium'
+        ? parsed.confidence
+        : 'low';
+    const reasoning =
+      typeof parsed.reasoning === 'string' ? parsed.reasoning.slice(0, 400) : '';
+    const suggestions = Array.isArray(parsed.suggestions)
+      ? (parsed.suggestions as unknown[])
+          .filter((s): s is string => typeof s === 'string')
+          .slice(0, 3)
+          .map((s) => s.slice(0, 200))
+      : [];
+
+    return NextResponse.json({
+      type, countries, timeframe, description,
+      confidence, reasoning, suggestions,
+    });
   } catch (parseErr) {
     console.error('[region-lookup] Failed to parse AI response', {
       period,

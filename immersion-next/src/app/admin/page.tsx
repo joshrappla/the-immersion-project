@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import RegionMappingsPanel from '@/components/RegionMappingsPanel';
+import { inferRegions, type InferenceResult } from '@/lib/regionInference';
+import InferencePreview, { InferencePreviewSkeleton } from '@/components/admin/InferencePreview';
 
 interface MediaItem {
   mediaId: string;
@@ -17,6 +19,12 @@ interface MediaItem {
   country?: string;
   latitude?: number;
   longitude?: number;
+  /** ISO alpha-2 codes inferred or manually set for map highlighting. */
+  countryCodes?: string[];
+  inferenceSource?: 'temporal' | 'hardcoded' | 'custom' | 'ai' | 'title-analysis' | 'manual' | 'fallback';
+  inferenceConfidence?: 'high' | 'medium' | 'low';
+  inferredAt?: number;
+  overriddenAt?: number;
 }
 
 // Generate starfield once - won't change on re-renders
@@ -50,6 +58,32 @@ export default function AdminPanel() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
 
+  // ── Inference state (media add/edit form) ─────────────────────────────────
+  /** Controlled era field value */
+  const [formEra, setFormEra] = useState('');
+  const [formStartYear, setFormStartYear] = useState<number>(1000);
+  const [formEndYear, setFormEndYear] = useState<number>(1100);
+  const [inferenceResult, setInferenceResult] = useState<InferenceResult | null>(null);
+  const [inferenceLoading, setInferenceLoading] = useState(false);
+  /** True when the user has clicked "Edit manually" and overridden the inference. */
+  const [inferenceOverridden, setInferenceOverridden] = useState(false);
+  /** Comma-separated country codes entered manually when overridden. */
+  const [manualCountriesStr, setManualCountriesStr] = useState('');
+  const inferenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Batch re-analyze state ────────────────────────────────────────────────
+  const [showBatchAnalyze, setShowBatchAnalyze] = useState(false);
+  interface BatchItem {
+    item: MediaItem;
+    inferred: InferenceResult | null;
+    loading: boolean;
+    selected: boolean;
+  }
+  const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
+  const [batchRunning, setBatchRunning] = useState(false);
+  const [batchApplying, setBatchApplying] = useState(false);
+  const batchAbortRef = useRef(false);
+
   // Generate starfield once using useMemo - won't regenerate on state changes
   const loginStars = useMemo(() => generateStarfield(200), []);
   const adminStars = useMemo(() => generateStarfield(150), []);
@@ -80,6 +114,55 @@ export default function AdminPanel() {
   useEffect(() => {
     if (isAuthenticated) fetchMediaItems();
   }, [isAuthenticated]);
+
+  // ── Reset form inference state when form opens / editing item changes ──────
+  useEffect(() => {
+    if (showForm) {
+      const era = editingItem?.timePeriod ?? '';
+      const sy  = editingItem?.startYear  ?? new Date().getFullYear();
+      const ey  = editingItem?.endYear    ?? new Date().getFullYear();
+      setFormEra(era);
+      setFormStartYear(sy);
+      setFormEndYear(ey);
+      setInferenceResult(null);
+      setInferenceLoading(false);
+      setInferenceOverridden(false);
+      setManualCountriesStr(editingItem?.countryCodes?.join(', ') ?? '');
+    }
+  }, [showForm, editingItem]);
+
+  // ── Debounced auto-inference (fires 500ms after era / years change) ────────
+  useEffect(() => {
+    if (!showForm || !formEra.trim()) {
+      setInferenceResult(null);
+      setInferenceLoading(false);
+      return;
+    }
+    if (inferenceOverridden) return; // user is editing manually — don't re-infer
+
+    if (inferenceTimerRef.current) clearTimeout(inferenceTimerRef.current);
+    setInferenceLoading(true);
+    setInferenceResult(null);
+
+    inferenceTimerRef.current = setTimeout(async () => {
+      try {
+        const result = await inferRegions({
+          era: formEra.trim(),
+          startYear: formStartYear,
+          endYear: formEndYear,
+        });
+        setInferenceResult(result);
+      } catch {
+        // ignore — fallback already handled inside inferRegions
+      } finally {
+        setInferenceLoading(false);
+      }
+    }, 500);
+
+    return () => {
+      if (inferenceTimerRef.current) clearTimeout(inferenceTimerRef.current);
+    };
+  }, [formEra, formStartYear, formEndYear, showForm, inferenceOverridden]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,19 +235,36 @@ export default function AdminPanel() {
     const latVal = formData.get('latitude') as string;
     const lngVal = formData.get('longitude') as string;
 
+    // Resolve country codes from inference or manual override
+    const resolvedCodes: string[] = inferenceOverridden
+      ? manualCountriesStr
+          .split(',')
+          .map((s) => s.trim().toUpperCase())
+          .filter((s) => /^[A-Z]{2}$/.test(s))
+      : inferenceResult?.countries ?? [];
+
     const item = {
       mediaId: editingItem?.mediaId || `media_${Date.now()}`,
       title: formData.get('title') as string,
       mediaType: formData.get('mediaType') as string,
-      timePeriod: formData.get('timePeriod') as string,
-      startYear: parseInt(formData.get('startYear') as string),
-      endYear: parseInt(formData.get('endYear') as string),
+      timePeriod: formEra || (formData.get('timePeriod') as string),
+      startYear: formStartYear || parseInt(formData.get('startYear') as string),
+      endYear: formEndYear || parseInt(formData.get('endYear') as string),
       description: formData.get('description') as string,
       imageUrl: formData.get('imageUrl') as string,
       streamingUrl: formData.get('streamingUrl') as string,
       ...(countryVal ? { country: countryVal } : {}),
       ...(latVal ? { latitude: parseFloat(latVal) } : {}),
       ...(lngVal ? { longitude: parseFloat(lngVal) } : {}),
+      ...(resolvedCodes.length > 0 ? { countryCodes: resolvedCodes } : {}),
+      ...(inferenceResult && !inferenceOverridden
+        ? {
+            inferenceSource:     inferenceResult.source,
+            inferenceConfidence: inferenceResult.confidence,
+            inferredAt:          inferenceResult.inferredAt,
+          }
+        : {}),
+      ...(inferenceOverridden ? { overriddenAt: Date.now(), inferenceSource: 'manual' as const } : {}),
     };
 
     try {
@@ -339,15 +439,26 @@ export default function AdminPanel() {
               View Timeline
             </Link>
             {activeTab === 'media' && (
-              <button
-                onClick={() => {
-                  setShowForm(true);
-                  setEditingItem(null);
-                }}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
-              >
-                + Add New
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    setBatchItems(mediaItems.map((item) => ({ item, inferred: null, loading: false, selected: true })));
+                    setShowBatchAnalyze(true);
+                  }}
+                  className="px-4 py-2 bg-indigo-700 text-white rounded-lg font-semibold hover:bg-indigo-600 transition text-sm"
+                >
+                  ⚙ Re-analyze All
+                </button>
+                <button
+                  onClick={() => {
+                    setShowForm(true);
+                    setEditingItem(null);
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+                >
+                  + Add New
+                </button>
+              </>
             )}
             <button
               onClick={handleLogout}
@@ -602,10 +713,15 @@ export default function AdminPanel() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1 text-gray-300">Era</label>
+                    <label htmlFor="form-era" className="block text-sm font-medium mb-1 text-gray-300">Era</label>
                     <input
+                      id="form-era"
                       name="timePeriod"
-                      defaultValue={editingItem?.timePeriod}
+                      value={formEra}
+                      onChange={(e) => {
+                        setFormEra(e.target.value);
+                        setInferenceOverridden(false);
+                      }}
                       required
                       placeholder="e.g. Viking Age"
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-purple-600 focus:outline-none"
@@ -615,27 +731,88 @@ export default function AdminPanel() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1 text-gray-300">Start Year</label>
+                    <label htmlFor="form-start-year" className="block text-sm font-medium mb-1 text-gray-300">Start Year</label>
                     <input
+                      id="form-start-year"
                       name="startYear"
                       type="number"
-                      defaultValue={editingItem?.startYear}
+                      value={formStartYear}
+                      onChange={(e) => {
+                        setFormStartYear(parseInt(e.target.value) || 0);
+                        setInferenceOverridden(false);
+                      }}
                       required
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-purple-600 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1 text-gray-300">End Year</label>
+                    <label htmlFor="form-end-year" className="block text-sm font-medium mb-1 text-gray-300">End Year</label>
                     <input
+                      id="form-end-year"
                       name="endYear"
                       type="number"
-                      defaultValue={editingItem?.endYear}
+                      value={formEndYear}
+                      onChange={(e) => {
+                        setFormEndYear(parseInt(e.target.value) || 0);
+                        setInferenceOverridden(false);
+                      }}
                       required
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-purple-600 focus:outline-none"
                     />
                   </div>
                 </div>
+
+                {/* ── Auto-inference region panel ──────────────────────────────── */}
+                {formEra.trim() && (
+                  <div className="pt-1">
+                    {inferenceLoading ? (
+                      <InferencePreviewSkeleton label="Analyzing historical context…" />
+                    ) : inferenceOverridden ? (
+                      <div className="rounded-lg border border-teal-700/50 bg-teal-900/20 p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-teal-300">Manual region override</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setInferenceOverridden(false);
+                              setManualCountriesStr('');
+                            }}
+                            className="text-xs text-gray-400 hover:text-gray-200 transition"
+                          >
+                            ← Use AI suggestion
+                          </button>
+                        </div>
+                        <label htmlFor="manual-codes" className="block text-xs text-gray-400">
+                          ISO codes (comma-separated):
+                        </label>
+                        <input
+                          id="manual-codes"
+                          type="text"
+                          value={manualCountriesStr}
+                          onChange={(e) => setManualCountriesStr(e.target.value)}
+                          placeholder="e.g. IT, FR, DE"
+                          className="w-full px-2 py-1.5 bg-gray-800 border border-gray-600 text-white rounded text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono"
+                        />
+                        <p className="text-xs text-gray-500">
+                          Enter 2-letter ISO 3166-1 alpha-2 codes, comma-separated.
+                        </p>
+                      </div>
+                    ) : inferenceResult ? (
+                      <InferencePreview
+                        result={inferenceResult}
+                        onEditManually={() => {
+                          setInferenceOverridden(true);
+                          setManualCountriesStr(inferenceResult.countries.join(', '));
+                        }}
+                        onUseSuggestion={(codes) => {
+                          setInferenceOverridden(true);
+                          setManualCountriesStr(codes.join(', '));
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-300">Description</label>
@@ -738,6 +915,220 @@ export default function AdminPanel() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Batch Re-analyze Modal ──────────────────────────────────────────── */}
+      {showBatchAnalyze && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col border border-gray-700">
+            {/* Modal header */}
+            <div className="flex items-center justify-between p-5 border-b border-gray-700 flex-shrink-0">
+              <div>
+                <h2 className="text-xl font-bold text-white">Re-analyze All Media Regions</h2>
+                <p className="text-sm text-gray-400 mt-0.5">
+                  Automatically infer country codes for each media item based on era and year range.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  batchAbortRef.current = true;
+                  setShowBatchAnalyze(false);
+                  setBatchRunning(false);
+                  setBatchItems([]);
+                }}
+                className="text-gray-400 hover:text-white transition p-1"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Item list */}
+            <div className="overflow-y-auto flex-1 p-4 space-y-2">
+              {batchItems.map((bi, idx) => (
+                <div
+                  key={bi.item.mediaId}
+                  className="flex items-start gap-3 p-3 rounded-lg bg-gray-800/60 border border-gray-700"
+                >
+                  <input
+                    type="checkbox"
+                    checked={bi.selected}
+                    onChange={() => {
+                      setBatchItems((prev) =>
+                        prev.map((b, i) => i === idx ? { ...b, selected: !b.selected } : b)
+                      );
+                    }}
+                    className="mt-1 w-4 h-4 rounded border-gray-600 bg-gray-700 text-purple-600"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-white text-sm truncate">{bi.item.title}</span>
+                      <span className="text-xs text-blue-400 bg-blue-900/30 px-1.5 py-0.5 rounded border border-blue-800/40">
+                        {bi.item.timePeriod}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {bi.item.startYear} – {bi.item.endYear}
+                      </span>
+                    </div>
+                    {bi.loading && (
+                      <p className="text-xs text-purple-400 mt-1 animate-pulse">Analyzing…</p>
+                    )}
+                    {bi.inferred && !bi.loading && (
+                      <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                        <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${
+                          bi.inferred.confidence === 'high'
+                            ? 'text-green-300 bg-green-900/30 border-green-700/50'
+                            : bi.inferred.confidence === 'medium'
+                            ? 'text-yellow-300 bg-yellow-900/30 border-yellow-700/50'
+                            : 'text-red-300 bg-red-900/30 border-red-700/50'
+                        }`}>
+                          {bi.inferred.confidence}
+                        </span>
+                        <span className="text-xs text-gray-400">{bi.inferred.source}</span>
+                        <span className="text-xs text-purple-300 font-mono">
+                          {bi.inferred.countries.join(', ') || '(none)'}
+                        </span>
+                      </div>
+                    )}
+                    {bi.inferred && !bi.loading && bi.inferred.reasoning && (
+                      <p className="text-xs text-gray-500 mt-0.5 italic">{bi.inferred.reasoning}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Progress bar */}
+            {batchRunning && (
+              <div className="px-4 pb-2 flex-shrink-0">
+                <div className="w-full bg-gray-700 rounded-full h-1.5">
+                  <div
+                    className="bg-purple-500 h-1.5 rounded-full transition-all"
+                    style={{
+                      width: `${
+                        batchItems.length
+                          ? (batchItems.filter((b) => !b.loading && b.inferred !== null).length /
+                              batchItems.length) *
+                            100
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1 text-center">
+                  {batchItems.filter((b) => !b.loading && b.inferred !== null).length} /{' '}
+                  {batchItems.length} analyzed
+                </p>
+              </div>
+            )}
+
+            {/* Action bar */}
+            <div className="flex items-center gap-3 p-4 border-t border-gray-700 flex-shrink-0">
+              {!batchRunning && batchItems.every((b) => !b.loading && b.inferred === null) && (
+                <button
+                  onClick={async () => {
+                    batchAbortRef.current = false;
+                    setBatchRunning(true);
+
+                    for (let i = 0; i < batchItems.length; i++) {
+                      if (batchAbortRef.current) break;
+
+                      setBatchItems((prev) =>
+                        prev.map((b, idx) => idx === i ? { ...b, loading: true } : b)
+                      );
+
+                      try {
+                        const result = await inferRegions({
+                          era:       batchItems[i].item.timePeriod,
+                          startYear: batchItems[i].item.startYear,
+                          endYear:   batchItems[i].item.endYear,
+                          title:     batchItems[i].item.title,
+                        });
+                        setBatchItems((prev) =>
+                          prev.map((b, idx) =>
+                            idx === i ? { ...b, inferred: result, loading: false } : b
+                          )
+                        );
+                      } catch {
+                        setBatchItems((prev) =>
+                          prev.map((b, idx) => idx === i ? { ...b, loading: false } : b)
+                        );
+                      }
+
+                      // 200ms gap between requests to avoid rate-limiting
+                      await new Promise((r) => setTimeout(r, 200));
+                    }
+
+                    setBatchRunning(false);
+                  }}
+                  className="px-5 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition"
+                >
+                  Start Analysis
+                </button>
+              )}
+
+              {batchRunning && (
+                <button
+                  onClick={() => {
+                    batchAbortRef.current = true;
+                    setBatchRunning(false);
+                  }}
+                  className="px-5 py-2 bg-red-700 text-white rounded-lg font-semibold hover:bg-red-800 transition"
+                >
+                  Cancel
+                </button>
+              )}
+
+              {!batchRunning && batchItems.some((b) => b.inferred !== null) && (
+                <button
+                  disabled={batchApplying}
+                  onClick={async () => {
+                    setBatchApplying(true);
+                    const toUpdate = batchItems.filter(
+                      (b) => b.selected && b.inferred && b.inferred.countries.length > 0
+                    );
+
+                    try {
+                      await Promise.all(
+                        toUpdate.map(({ item, inferred }) =>
+                          fetch(`${API_URL}/media/${item.mediaId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              ...item,
+                              countryCodes:        inferred!.countries,
+                              inferenceSource:     inferred!.source,
+                              inferenceConfidence: inferred!.confidence,
+                              inferredAt:          inferred!.inferredAt,
+                            }),
+                          })
+                        )
+                      );
+                      await fetchMediaItems();
+                      setShowBatchAnalyze(false);
+                      setBatchItems([]);
+                      alert(`Applied region data to ${toUpdate.length} item(s).`);
+                    } catch {
+                      alert('Failed to apply some changes.');
+                    } finally {
+                      setBatchApplying(false);
+                    }
+                  }}
+                  className="px-5 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50"
+                >
+                  {batchApplying
+                    ? 'Applying…'
+                    : `Apply to ${batchItems.filter((b) => b.selected && b.inferred && b.inferred.countries.length > 0).length} item(s)`}
+                </button>
+              )}
+
+              <span className="ml-auto text-xs text-gray-500">
+                {batchItems.filter((b) => b.selected).length} of {batchItems.length} selected
+              </span>
             </div>
           </div>
         </div>
