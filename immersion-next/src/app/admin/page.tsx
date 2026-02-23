@@ -470,6 +470,18 @@ export default function AdminPanel() {
       {/* Region Mappings tab content */}
       {activeTab === 'regions' && (
         <div className="relative z-10 container mx-auto p-6">
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-gray-400 text-sm">Manage historical period → country mappings and AI cache.</p>
+            <Link
+              href="/admin/regions"
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 transition flex items-center gap-1.5"
+            >
+              Open dedicated page
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </Link>
+          </div>
           <RegionMappingsPanel />
         </div>
       )}

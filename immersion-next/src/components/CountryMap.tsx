@@ -4,14 +4,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import {
   getCountriesForPeriod,
-  getCachedRegion,
-  setCachedRegion,
-  type RegionCacheEntry,
+  REGION_MAPPINGS,
 } from '@/utils/regionMappings';
+import { getRegionsFromAI } from '@/lib/regionAI';
 
 // Maps ISO 3166-1 alpha-2 codes to the country name strings used in
 // the countries-110m.json topojson (Natural Earth "name" property).
 const ISO_A2_TO_NAME: Record<string, string> = {
+  // Original set
   AU: 'Australia',
   CA: 'Canada',
   DE: 'Germany',
@@ -30,6 +30,49 @@ const ISO_A2_TO_NAME: Record<string, string> = {
   SE: 'Sweden',
   TR: 'Turkey',
   ZA: 'South Africa',
+  // Ottoman Empire additions
+  RS: 'Serbia',
+  BG: 'Bulgaria',
+  HU: 'Hungary',
+  RO: 'Romania',
+  SA: 'Saudi Arabia',
+  IQ: 'Iraq',
+  SY: 'Syria',
+  LY: 'Libya',
+  TN: 'Tunisia',
+  DZ: 'Algeria',
+  JO: 'Jordan',
+  // Mongol Empire additions
+  MN: 'Mongolia',
+  CN: 'China',
+  RU: 'Russia',
+  KZ: 'Kazakhstan',
+  KG: 'Kyrgyzstan',
+  UZ: 'Uzbekistan',
+  TM: 'Turkmenistan',
+  AF: 'Afghanistan',
+  IR: 'Iran',
+  UA: 'Ukraine',
+  // Other commonly referenced countries
+  PL: 'Poland',
+  CZ: 'Czech Republic',
+  AT: 'Austria',
+  CH: 'Switzerland',
+  BE: 'Belgium',
+  NL: 'Netherlands',
+  PT: 'Portugal',
+  US: 'United States of America',
+  MX: 'Mexico',
+  BR: 'Brazil',
+  AR: 'Argentina',
+  JP: 'Japan',
+  KR: 'South Korea',
+  PK: 'Pakistan',
+  AZ: 'Azerbaijan',
+  GE: 'Georgia',
+  AM: 'Armenia',
+  LB: 'Lebanon',
+  IL: 'Israel',
 };
 
 const GEO_URL = '/countries-110m.json';
@@ -86,40 +129,29 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
 
     mediaItems.forEach((item) => {
       if (!item.country) return;
-      // Already has a static mapping → no AI needed
+      // Already resolved by static REGION_MAPPINGS → no async work needed
       if (getCountriesForPeriod(item.country).length > 0) return;
-      // Already requested or resolved this session
+      // Already requested (or resolved) this session → skip
       if (requestedRef.current.has(item.country)) return;
-
-      // Check localStorage cache first
-      const cached = getCachedRegion(item.country);
-      if (cached) {
-        requestedRef.current.add(item.country);
-        setAiRegions((prev) => ({ ...prev, [item.country!]: cached.countries }));
-        return;
-      }
-
       toFetch.push(item.country);
     });
 
     if (toFetch.length === 0) return;
 
-    // Mark all as requested before firing async calls to prevent races
+    // Mark all as in-flight before firing to prevent duplicate requests on re-render
     toFetch.forEach((c) => requestedRef.current.add(c));
     setLoadingRegions((prev) => new Set([...prev, ...toFetch]));
 
     toFetch.forEach(async (country) => {
       try {
-        const res = await fetch(
-          `/api/region-lookup?period=${encodeURIComponent(country)}`
-        );
-        if (res.ok) {
-          const data = (await res.json()) as RegionCacheEntry;
-          setCachedRegion(country, data);
-          setAiRegions((prev) => ({ ...prev, [country]: data.countries }));
+        // getRegionsFromAI handles the full pipeline:
+        //   REGION_MAPPINGS → regionCache_<period> localStorage → AI API → fallback
+        const result = await getRegionsFromAI(country);
+        if (result.countries.length > 0) {
+          setAiRegions((prev) => ({ ...prev, [country]: result.countries }));
         }
-      } catch {
-        // Network / API error — leave this country unhighlighted (no crash)
+      } catch (err) {
+        console.error('[CountryMap] region lookup failed for', country, err);
       } finally {
         setLoadingRegions((prev) => {
           const next = new Set(prev);
@@ -150,6 +182,30 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
     });
     return names;
   }, [mediaItems, highlightedCountryCodes, aiRegions]);
+
+  // Collect the display names of every recognised era/empire currently in view
+  // (used in the legend instead of the generic "Region" label).
+  const activeEraNames = useMemo(() => {
+    const seen = new Set<string>();
+    const names: string[] = [];
+    mediaItems.forEach((item) => {
+      if (!item.country) return;
+      // Skip bare ISO alpha-2 codes — those are individual countries, not named eras
+      if (item.country.trim().length === 2) return;
+      if (seen.has(item.country)) return;
+      const inStatic =
+        REGION_MAPPINGS[item.country] !== undefined ||
+        Object.keys(REGION_MAPPINGS).some(
+          (k) => k.toLowerCase() === item.country!.toLowerCase()
+        );
+      const inAI = (aiRegions[item.country]?.length ?? 0) > 0;
+      if (inStatic || inAI) {
+        seen.add(item.country);
+        names.push(item.country);
+      }
+    });
+    return names;
+  }, [mediaItems, aiRegions]);
 
   const mappedItems = mediaItems.filter(
     (item) => item.latitude !== undefined && item.longitude !== undefined
@@ -184,10 +240,33 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
           {highlightedNames.size > 0 && (
             <>
               <div className="border-t border-white/10 my-1" />
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-[#1a3f6f] border border-[#3b82f6]" />
-                <span className="text-xs text-gray-300">Region</span>
-              </div>
+              {activeEraNames.length > 0 ? (
+                // Show one entry per recognised empire / era
+                <>
+                  {activeEraNames.slice(0, 4).map((era) => (
+                    <div key={era} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-[#1a3f6f] border border-[#3b82f6] flex-shrink-0" />
+                      <span
+                        className="text-xs text-gray-300 truncate max-w-[120px]"
+                        title={era}
+                      >
+                        {era}
+                      </span>
+                    </div>
+                  ))}
+                  {activeEraNames.length > 4 && (
+                    <span className="text-xs text-gray-500 pl-5">
+                      +{activeEraNames.length - 4} more
+                    </span>
+                  )}
+                </>
+              ) : (
+                // Fallback for bare-code highlights (e.g. via highlightedCountryCodes prop)
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-[#1a3f6f] border border-[#3b82f6]" />
+                  <span className="text-xs text-gray-300">Region</span>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -217,7 +296,7 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
               />
             </svg>
             <p className="text-blue-400 text-xs">
-              AI determining region{loadingRegions.size > 1 ? 's' : ''}…
+              Analyzing historical period{loadingRegions.size > 1 ? 's' : ''}…
             </p>
           </div>
         )}
