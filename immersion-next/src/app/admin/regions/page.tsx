@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from 'react';
 import Link from 'next/link';
 import {
   REGION_MAPPINGS,
@@ -66,6 +66,53 @@ function downloadCSV(rows: MappingRow[], filename: string) {
   URL.revokeObjectURL(url);
 }
 
+/** Returns true when the event target is an editable input — shortcuts should be suppressed. */
+function isTyping(e: KeyboardEvent): boolean {
+  const t = e.target as HTMLElement;
+  return t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable;
+}
+
+// ---------------------------------------------------------------------------
+// Keyboard shortcuts overlay
+// ---------------------------------------------------------------------------
+
+const SHORTCUTS = [
+  { key: 'N', description: 'New mapping (Add tab)' },
+  { key: '/', description: 'Focus search box' },
+  { key: 'Esc', description: 'Cancel / return to Mappings tab' },
+  { key: '?', description: 'Toggle this shortcuts panel' },
+  { key: 'Ctrl+S', description: 'Save form (when in Add tab)' },
+];
+
+function KeyboardShortcutsOverlay({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-sm shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-white font-semibold">Keyboard Shortcuts</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition text-lg leading-none">×</button>
+        </div>
+        <table className="w-full text-sm">
+          <tbody className="divide-y divide-gray-800">
+            {SHORTCUTS.map(({ key, description }) => (
+              <tr key={key}>
+                <td className="py-2 pr-4">
+                  <kbd className="px-2 py-0.5 bg-gray-800 border border-gray-600 rounded text-gray-300 font-mono text-xs">{key}</kbd>
+                </td>
+                <td className="py-2 text-gray-400 text-xs">{description}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="text-gray-600 text-xs mt-4 text-center">Press ? or click outside to close</p>
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
@@ -73,18 +120,22 @@ function downloadCSV(rows: MappingRow[], filename: string) {
 export default function AdminRegionsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('hardcoded');
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   // Data
-  const [customMappings, setCustomMappings] = useState<Record<string, RegionCacheEntry>>({});
+  const [customMappings, setCustomMappingsState] = useState<Record<string, RegionCacheEntry>>({});
   const [legacyAICache, setLegacyAICache] = useState<Record<string, RegionCacheEntry>>({});
   const [perEntryStats, setPerEntryStats] = useState<CacheStats>({ entries: 0, size: 0, oldest: null, newest: null });
 
-  // Hardcoded tab
+  // Mappings tab
   const [hardcodedSearch, setHardcodedSearch] = useState('');
   const [previewPeriod, setPreviewPeriod] = useState<string | null>(null);
+  const hardcodedSearchRef = useRef<HTMLInputElement>(null);
 
   // Cache tab
   const [cacheSearch, setCacheSearch] = useState('');
+  const [selectedCacheKeys, setSelectedCacheKeys] = useState<Set<string>>(new Set());
+  const cacheSearchRef = useRef<HTMLInputElement>(null);
 
   // Add/Edit form
   const [editingPeriod, setEditingPeriod] = useState<string | null>(null);
@@ -102,7 +153,7 @@ export default function AdminRegionsPage() {
   // ── Data refresh ───────────────────────────────────────────────────────────
 
   const refresh = useCallback(() => {
-    setCustomMappings(getCustomMappings());
+    setCustomMappingsState(getCustomMappings());
     setLegacyAICache(getAllCachedRegions());
     setPerEntryStats(getCacheStats());
   }, []);
@@ -110,6 +161,43 @@ export default function AdminRegionsPage() {
   useEffect(() => {
     if (isAuthenticated) refresh();
   }, [isAuthenticated, refresh]);
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // ? → toggle shortcut overlay (always, even when typing)
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setShowShortcuts((v) => !v);
+        return;
+      }
+      // Esc → close overlay or return to mappings tab
+      if (e.key === 'Escape') {
+        if (showShortcuts) { setShowShortcuts(false); return; }
+        if (activeTab === 'add') { handleFormCancel(); return; }
+        return;
+      }
+      // Skip remaining shortcuts when typing in a field
+      if (isTyping(e)) return;
+      // n → new mapping
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        openAdd();
+        return;
+      }
+      // / → focus search
+      if (e.key === '/') {
+        e.preventDefault();
+        if (activeTab === 'hardcoded') hardcodedSearchRef.current?.focus();
+        else if (activeTab === 'cache') cacheSearchRef.current?.focus();
+        return;
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, showShortcuts]);
 
   // ── Derived data ───────────────────────────────────────────────────────────
 
@@ -141,11 +229,9 @@ export default function AdminRegionsPage() {
     })),
   [customMappings]);
 
-  // All rows shown in the hardcoded tab (static + custom overrides)
   const allMappingRows: MappingRow[] = useMemo(() => {
     const q = hardcodedSearch.toLowerCase();
     const combined = [...hardcodedRows];
-    // Append custom rows not already shown as static
     const staticKeys = new Set(hardcodedRows.map((r) => r.period.toLowerCase()));
     customRows
       .filter((r) => !staticKeys.has(r.period.toLowerCase()))
@@ -166,7 +252,37 @@ export default function AdminRegionsPage() {
     );
   }, [legacyAICache, cacheSearch]);
 
+  // Reset selection when filter changes
+  useEffect(() => {
+    setSelectedCacheKeys(new Set());
+  }, [cacheSearch]);
+
   const totalCacheEntries = Object.keys(legacyAICache).length + perEntryStats.entries;
+
+  // ── Batch selection helpers ─────────────────────────────────────────────────
+
+  const allVisibleCacheKeys = cacheEntries.map(([p]) => p);
+  const allVisibleSelected =
+    allVisibleCacheKeys.length > 0 &&
+    allVisibleCacheKeys.every((k) => selectedCacheKeys.has(k));
+  const someSelected = selectedCacheKeys.size > 0;
+
+  const toggleCacheKey = (key: string) => {
+    setSelectedCacheKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allVisibleSelected) {
+      setSelectedCacheKeys(new Set());
+    } else {
+      setSelectedCacheKeys(new Set(allVisibleCacheKeys));
+    }
+  };
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -218,6 +334,7 @@ export default function AdminRegionsPage() {
 
   const handleDeleteLegacyCache = (period: string) => {
     deleteCachedRegion(period);
+    setSelectedCacheKeys((prev) => { const next = new Set(prev); next.delete(period); return next; });
     refresh();
   };
 
@@ -225,26 +342,48 @@ export default function AdminRegionsPage() {
     if (!confirm('Clear all AI cache entries?')) return;
     clearAICache();
     clearPerEntryCache();
+    setSelectedCacheKeys(new Set());
     refresh();
   };
 
   const handlePromoteToCustom = (period: string, entry: RegionCacheEntry) => {
     setCustomMapping(period, entry);
     deleteCachedRegion(period);
+    setSelectedCacheKeys((prev) => { const next = new Set(prev); next.delete(period); return next; });
     refresh();
   };
 
-  const handleExportJSON = () => {
-    const data = Object.entries(customMappings).map(([period, entry]) => ({
-      period,
-      ...entry,
-    }));
-    downloadJSON(data, 'region-mappings.json');
+  // ── Batch handlers ─────────────────────────────────────────────────────────
+
+  const handleBulkPromote = () => {
+    const keys = [...selectedCacheKeys];
+    if (!confirm(`Promote ${keys.length} entr${keys.length === 1 ? 'y' : 'ies'} to custom mappings?`)) return;
+    keys.forEach((p) => {
+      const entry = legacyAICache[p];
+      if (entry) { setCustomMapping(p, entry); deleteCachedRegion(p); }
+    });
+    setSelectedCacheKeys(new Set());
+    refresh();
   };
 
-  const handleExportCSV = () => {
-    downloadCSV(customRows, 'region-mappings.csv');
+  const handleBulkDelete = () => {
+    const keys = [...selectedCacheKeys];
+    if (!confirm(`Delete ${keys.length} cache entr${keys.length === 1 ? 'y' : 'ies'}?`)) return;
+    keys.forEach((p) => deleteCachedRegion(p));
+    setSelectedCacheKeys(new Set());
+    refresh();
   };
+
+  // ── Export ─────────────────────────────────────────────────────────────────
+
+  const handleExportJSON = () => {
+    downloadJSON(
+      Object.entries(customMappings).map(([period, entry]) => ({ period, ...entry })),
+      'region-mappings.json'
+    );
+  };
+
+  const handleExportCSV = () => { downloadCSV(customRows, 'region-mappings.csv'); };
 
   const handleExportAllJSON = () => {
     downloadJSON(
@@ -253,16 +392,13 @@ export default function AdminRegionsPage() {
     );
   };
 
-  // ── Unauthenticated / loading ───────────────────────────────────────────────
+  // ── Auth screens ───────────────────────────────────────────────────────────
 
   if (isAuthenticated === null) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-gray-400">
-        Loading…
-      </div>
+      <div className="min-h-screen bg-black flex items-center justify-center text-gray-400">Loading…</div>
     );
   }
-
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4 text-gray-400">
@@ -279,7 +415,10 @@ export default function AdminRegionsPage() {
   return (
     <div className="min-h-screen bg-black text-white">
 
-      {/* Header */}
+      {/* Keyboard shortcuts overlay */}
+      {showShortcuts && <KeyboardShortcutsOverlay onClose={() => setShowShortcuts(false)} />}
+
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="bg-gray-900/80 backdrop-blur-sm border-b border-gray-700 px-6 py-4 sticky top-0 z-20">
         <div className="container mx-auto flex items-center justify-between gap-4 flex-wrap">
           {/* Breadcrumb */}
@@ -290,40 +429,30 @@ export default function AdminRegionsPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
             <button
               onClick={openAdd}
+              title="N"
               className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition"
             >
               + Add Mapping
             </button>
             {customRows.length > 0 && (
               <>
-                <button
-                  onClick={handleExportJSON}
-                  className="px-3 py-1.5 bg-gray-700 text-gray-200 rounded-lg text-sm border border-gray-600 hover:bg-gray-600 transition"
-                >
-                  Export JSON
-                </button>
-                <button
-                  onClick={handleExportCSV}
-                  className="px-3 py-1.5 bg-gray-700 text-gray-200 rounded-lg text-sm border border-gray-600 hover:bg-gray-600 transition"
-                >
-                  Export CSV
-                </button>
+                <button onClick={handleExportJSON} className="px-3 py-1.5 bg-gray-700 text-gray-200 rounded-lg text-sm border border-gray-600 hover:bg-gray-600 transition">Export JSON</button>
+                <button onClick={handleExportCSV} className="px-3 py-1.5 bg-gray-700 text-gray-200 rounded-lg text-sm border border-gray-600 hover:bg-gray-600 transition">Export CSV</button>
               </>
             )}
+            <button onClick={handleExportAllJSON} className="px-3 py-1.5 bg-gray-700 text-gray-200 rounded-lg text-sm border border-gray-600 hover:bg-gray-600 transition">Export All</button>
             <button
-              onClick={handleExportAllJSON}
-              className="px-3 py-1.5 bg-gray-700 text-gray-200 rounded-lg text-sm border border-gray-600 hover:bg-gray-600 transition"
+              onClick={() => setShowShortcuts(true)}
+              title="Show keyboard shortcuts (?)"
+              className="px-2.5 py-1.5 bg-gray-800 text-gray-400 rounded-lg text-sm border border-gray-700 hover:bg-gray-700 hover:text-white transition font-mono"
             >
-              Export All
+              ?
             </button>
-            <Link
-              href="/admin"
-              className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-sm border border-gray-700 hover:bg-gray-700 transition"
-            >
-              ← Back to Admin
+            <Link href="/admin" className="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-sm border border-gray-700 hover:bg-gray-700 transition">
+              ← Back
             </Link>
           </div>
         </div>
@@ -340,10 +469,7 @@ export default function AdminRegionsPage() {
             <button
               key={tab.id}
               onClick={() => {
-                if (tab.id !== 'add') {
-                  setEditingPeriod(null);
-                  setEditingData(undefined);
-                }
+                if (tab.id !== 'add') { setEditingPeriod(null); setEditingData(undefined); }
                 setActiveTab(tab.id);
               }}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
@@ -361,37 +487,34 @@ export default function AdminRegionsPage() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* ── Content ────────────────────────────────────────────────────────── */}
       <div className="container mx-auto p-6">
 
         {/* ================================================================ */}
-        {/* Tab A — Mappings (hardcoded + custom)                            */}
+        {/* Tab A — Mappings                                                  */}
         {/* ================================================================ */}
         {activeTab === 'hardcoded' && (
           <div className="space-y-5">
-
             {/* Stat bar */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Static Periods" value={Object.keys(REGION_MAPPINGS).length} color="gray" note="Read-only (built-in)" />
-              <StatCard label="Custom Overrides" value={Object.keys(customMappings).length} color="purple" note="Highest priority" />
-              <StatCard label="Total Shown" value={allMappingRows.length} color="teal" note={hardcodedSearch ? 'filtered' : 'all sources'} />
-              <StatCard label="Unique Countries" value={new Set(allMappingRows.flatMap((r) => r.countries)).size} color="blue" note="across all mappings" />
+              <StatCard label="Static Periods"    value={Object.keys(REGION_MAPPINGS).length} color="gray"   note="Read-only (built-in)" />
+              <StatCard label="Custom Overrides"  value={Object.keys(customMappings).length}  color="purple" note="Highest priority" />
+              <StatCard label="Shown"             value={allMappingRows.length}               color="teal"   note={hardcodedSearch ? 'filtered' : 'all'} />
+              <StatCard label="Unique Countries"  value={new Set(allMappingRows.flatMap((r) => r.countries)).size} color="blue" note="across all mappings" />
             </div>
 
-            {/* Search + bulk actions */}
+            {/* Search + clear custom */}
             <div className="flex flex-wrap gap-3 items-center">
               <input
+                ref={hardcodedSearchRef}
                 type="text"
-                placeholder="Search period name or country code…"
+                placeholder="Search period name or ISO code… (/)"
                 value={hardcodedSearch}
                 onChange={(e) => setHardcodedSearch(e.target.value)}
                 className="flex-1 min-w-[240px] px-3 py-2 bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 text-sm"
               />
               {customRows.length > 0 && (
-                <button
-                  onClick={handleClearAllCustom}
-                  className="px-3 py-2 bg-gray-800 text-red-400 rounded-lg text-sm border border-red-900/40 hover:bg-red-900/20 transition"
-                >
+                <button onClick={handleClearAllCustom} className="px-3 py-2 bg-gray-800 text-red-400 rounded-lg text-sm border border-red-900/40 hover:bg-red-900/20 transition">
                   Clear Custom ({customRows.length})
                 </button>
               )}
@@ -421,9 +544,7 @@ export default function AdminRegionsPage() {
                         const isPreviewing = previewPeriod === row.period;
                         return (
                           <Fragment key={`${row.source}-${row.period}`}>
-                            <tr
-                              className="hover:bg-white/5 transition"
-                            >
+                            <tr className="hover:bg-white/5 transition">
                               <td className="px-4 py-3 max-w-[200px]">
                                 <p className="font-semibold text-white truncate">{row.period}</p>
                                 {row.description && row.source === 'custom' && (
@@ -431,25 +552,18 @@ export default function AdminRegionsPage() {
                                 )}
                               </td>
                               <td className="px-4 py-3">
-                                <span
-                                  className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
-                                    isCustom
-                                      ? 'bg-purple-900/50 text-purple-300 border-purple-700'
-                                      : 'bg-gray-700 text-gray-300 border-gray-600'
-                                  }`}
-                                >
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
+                                  isCustom
+                                    ? 'bg-purple-900/50 text-purple-300 border-purple-700'
+                                    : 'bg-gray-700 text-gray-300 border-gray-600'
+                                }`}>
                                   {isCustom ? 'Custom' : 'Static'}
                                 </span>
                               </td>
                               <td className="px-4 py-3">
                                 <div className="flex flex-wrap gap-1">
                                   {row.countries.map((c) => (
-                                    <span
-                                      key={c}
-                                      className="px-1.5 py-0.5 bg-gray-800 text-gray-300 rounded text-xs border border-gray-700 font-mono"
-                                    >
-                                      {c}
-                                    </span>
+                                    <span key={c} className="px-1.5 py-0.5 bg-gray-800 text-gray-300 rounded text-xs border border-gray-700 font-mono">{c}</span>
                                   ))}
                                 </div>
                               </td>
@@ -466,27 +580,11 @@ export default function AdminRegionsPage() {
                                   </button>
                                   {isCustom ? (
                                     <>
-                                      <button
-                                        onClick={() => openEdit(row)}
-                                        className="px-2 py-1 bg-blue-600/80 text-white rounded text-xs hover:bg-blue-600 transition"
-                                      >
-                                        Edit
-                                      </button>
-                                      <button
-                                        onClick={() => handleDeleteCustom(row.period)}
-                                        className="px-2 py-1 bg-red-600/80 text-white rounded text-xs hover:bg-red-600 transition"
-                                      >
-                                        Delete
-                                      </button>
+                                      <button onClick={() => openEdit(row)} className="px-2 py-1 bg-blue-600/80 text-white rounded text-xs hover:bg-blue-600 transition">Edit</button>
+                                      <button onClick={() => handleDeleteCustom(row.period)} className="px-2 py-1 bg-red-600/80 text-white rounded text-xs hover:bg-red-600 transition">Delete</button>
                                     </>
                                   ) : (
-                                    <button
-                                      onClick={() => openEdit(row)}
-                                      title="Save as a custom override"
-                                      className="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs hover:bg-gray-600 transition whitespace-nowrap"
-                                    >
-                                      Override
-                                    </button>
+                                    <button onClick={() => openEdit(row)} title="Save as a custom override" className="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs hover:bg-gray-600 transition whitespace-nowrap">Override</button>
                                   )}
                                 </div>
                               </td>
@@ -514,11 +612,10 @@ export default function AdminRegionsPage() {
         {/* ================================================================ */}
         {activeTab === 'cache' && (
           <div className="space-y-5">
-
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Legacy Cache" value={Object.keys(legacyAICache).length} color="blue" note="regionCache key" />
-              <StatCard label="Per-entry Cache" value={perEntryStats.entries} color="blue" note={`${perEntryStats.size} KB`} />
+              <StatCard label="Legacy Cache"   value={Object.keys(legacyAICache).length} color="blue" note="regionCache key" />
+              <StatCard label="Per-entry Cache" value={perEntryStats.entries}            color="blue" note={`${perEntryStats.size} KB`} />
               <StatCard
                 label="Oldest Entry"
                 value={perEntryStats.oldest ? new Date(perEntryStats.oldest).toLocaleDateString() : '—'}
@@ -536,42 +633,54 @@ export default function AdminRegionsPage() {
             {/* Controls */}
             <div className="flex flex-wrap gap-3 items-center">
               <input
+                ref={cacheSearchRef}
                 type="text"
-                placeholder="Search cached period…"
+                placeholder="Search cached period… (/)"
                 value={cacheSearch}
                 onChange={(e) => setCacheSearch(e.target.value)}
                 className="flex-1 min-w-[240px] px-3 py-2 bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 text-sm"
               />
               {totalCacheEntries > 0 && (
-                <button
-                  onClick={handleClearLegacyCache}
-                  className="px-3 py-2 bg-gray-800 text-red-400 rounded-lg text-sm border border-red-900/40 hover:bg-red-900/20 transition"
-                >
-                  Clear All Cache
+                <button onClick={handleClearLegacyCache} className="px-3 py-2 bg-gray-800 text-red-400 rounded-lg text-sm border border-red-900/40 hover:bg-red-900/20 transition">
+                  Clear All
                 </button>
               )}
               {Object.keys(legacyAICache).length > 0 && (
                 <button
-                  onClick={() =>
-                    downloadJSON(
-                      Object.entries(legacyAICache).map(([period, entry]) => ({ period, ...entry })),
-                      'ai-cache.json'
-                    )
-                  }
+                  onClick={() => downloadJSON(
+                    Object.entries(legacyAICache).map(([period, entry]) => ({ period, ...entry })),
+                    'ai-cache.json'
+                  )}
                   className="px-3 py-2 bg-gray-700 text-gray-200 rounded-lg text-sm border border-gray-600 hover:bg-gray-600 transition"
                 >
-                  Export Cache JSON
+                  Export JSON
                 </button>
               )}
             </div>
 
-            {/* Legacy cache table */}
+            {/* Batch action bar */}
+            {someSelected && (
+              <div className="flex items-center gap-3 px-4 py-3 bg-purple-900/20 border border-purple-700/50 rounded-lg">
+                <span className="text-purple-300 text-sm font-semibold">
+                  {selectedCacheKeys.size} selected
+                </span>
+                <button onClick={handleBulkPromote} className="px-3 py-1.5 bg-purple-600 text-white rounded text-sm font-semibold hover:bg-purple-700 transition">
+                  → Promote to Custom
+                </button>
+                <button onClick={handleBulkDelete} className="px-3 py-1.5 bg-red-600 text-white rounded text-sm font-semibold hover:bg-red-700 transition">
+                  Delete Selected
+                </button>
+                <button onClick={() => setSelectedCacheKeys(new Set())} className="ml-auto text-gray-400 hover:text-white text-xs transition">
+                  Clear selection
+                </button>
+              </div>
+            )}
+
+            {/* Cache table */}
             {cacheEntries.length === 0 && perEntryStats.entries === 0 ? (
               <div className="text-center text-gray-500 py-16 text-sm bg-gray-900/60 rounded-lg border border-gray-700">
-                No AI cache entries.{' '}
-                <span className="text-gray-600">
-                  They appear here after the map looks up unknown time periods via the AI API.
-                </span>
+                No AI cache entries.
+                <span className="text-gray-600"> They appear here after the map resolves unknown time periods via the AI API.</span>
               </div>
             ) : (
               <div className="bg-gray-900/80 rounded-lg border border-gray-700 overflow-hidden">
@@ -580,75 +689,80 @@ export default function AdminRegionsPage() {
                     <table className="w-full text-sm">
                       <thead className="bg-gray-900/60 border-b border-gray-700">
                         <tr>
-                          <th className="text-left px-4 py-3 text-gray-400 font-medium">Period</th>
+                          {/* Select-all checkbox */}
+                          <th className="pl-4 pr-2 py-3 w-8">
+                            <input
+                              type="checkbox"
+                              checked={allVisibleSelected}
+                              onChange={toggleSelectAll}
+                              className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-600 focus:ring-purple-600 focus:ring-offset-gray-900 cursor-pointer"
+                            />
+                          </th>
+                          <th className="text-left px-2 py-3 text-gray-400 font-medium">Period</th>
                           <th className="text-left px-4 py-3 text-gray-400 font-medium">Countries</th>
                           <th className="text-left px-4 py-3 text-gray-400 font-medium hidden lg:table-cell">Timeframe</th>
                           <th className="text-right px-4 py-3 text-gray-400 font-medium">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-800">
-                        {cacheEntries.map(([period, entry]) => (
-                          <tr key={period} className="hover:bg-white/5 transition">
-                            <td className="px-4 py-3">
-                              <p className="font-medium text-white">{period}</p>
-                              {entry.description && (
-                                <p className="text-gray-500 text-xs mt-0.5">{entry.description}</p>
-                              )}
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-wrap gap-1">
-                                {entry.countries.map((c) => (
-                                  <span
-                                    key={c}
-                                    className="px-1.5 py-0.5 bg-blue-900/40 text-blue-300 rounded text-xs border border-blue-800/40 font-mono"
-                                  >
-                                    {c}
-                                  </span>
-                                ))}
-                                {entry.countries.length === 0 && (
-                                  <span className="text-gray-600 text-xs italic">none</span>
+                        {cacheEntries.map(([period, entry]) => {
+                          const isSelected = selectedCacheKeys.has(period);
+                          return (
+                            <tr
+                              key={period}
+                              className={`transition ${isSelected ? 'bg-purple-900/10' : 'hover:bg-white/5'}`}
+                            >
+                              <td className="pl-4 pr-2 py-3">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleCacheKey(period)}
+                                  className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-600 focus:ring-purple-600 focus:ring-offset-gray-900 cursor-pointer"
+                                />
+                              </td>
+                              <td className="px-2 py-3">
+                                <p className="font-medium text-white">{period}</p>
+                                {entry.description && (
+                                  <p className="text-gray-500 text-xs mt-0.5">{entry.description}</p>
                                 )}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell whitespace-nowrap">
-                              {entry.timeframe || '—'}
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex gap-1 justify-end">
-                                <button
-                                  onClick={() => handlePromoteToCustom(period, entry)}
-                                  title="Save as a custom override (takes priority over AI cache)"
-                                  className="px-2 py-1 bg-purple-600/80 text-white rounded text-xs hover:bg-purple-600 transition whitespace-nowrap"
-                                >
-                                  → Custom
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteLegacyCache(period)}
-                                  className="px-2 py-1 bg-red-600/80 text-white rounded text-xs hover:bg-red-600 transition"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap gap-1">
+                                  {entry.countries.map((c) => (
+                                    <span key={c} className="px-1.5 py-0.5 bg-blue-900/40 text-blue-300 rounded text-xs border border-blue-800/40 font-mono">{c}</span>
+                                  ))}
+                                  {entry.countries.length === 0 && (
+                                    <span className="text-gray-600 text-xs italic">none</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell whitespace-nowrap">
+                                {entry.timeframe || '—'}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex gap-1 justify-end">
+                                  <button onClick={() => handlePromoteToCustom(period, entry)} title="Save as a custom override" className="px-2 py-1 bg-purple-600/80 text-white rounded text-xs hover:bg-purple-600 transition whitespace-nowrap">→ Custom</button>
+                                  <button onClick={() => handleDeleteLegacyCache(period)} className="px-2 py-1 bg-red-600/80 text-white rounded text-xs hover:bg-red-600 transition">Delete</button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
                 ) : (
                   <p className="text-center text-gray-500 py-8 text-sm">
-                    {cacheSearch
-                      ? `No cache entries matching "${cacheSearch}"`
-                      : 'Legacy cache is empty.'}
+                    {cacheSearch ? `No cache entries matching "${cacheSearch}"` : 'Legacy cache is empty.'}
                   </p>
                 )}
                 {perEntryStats.entries > 0 && (
                   <div className="border-t border-gray-700 px-4 py-3 text-xs text-gray-500 flex justify-between items-center">
-                    <span>{perEntryStats.entries} per-entry cache item{perEntryStats.entries !== 1 ? 's' : ''} ({perEntryStats.size} KB) — stored as <code className="font-mono bg-gray-800 px-1 rounded">regionCache_*</code> keys</span>
-                    <button
-                      onClick={() => { clearPerEntryCache(); refresh(); }}
-                      className="text-red-400 hover:text-red-300 transition text-xs"
-                    >
+                    <span>
+                      {perEntryStats.entries} per-entry item{perEntryStats.entries !== 1 ? 's' : ''} ({perEntryStats.size} KB) —{' '}
+                      <code className="font-mono bg-gray-800 px-1 rounded">regionCache_*</code> keys
+                    </span>
+                    <button onClick={() => { clearPerEntryCache(); refresh(); }} className="text-red-400 hover:text-red-300 transition">
                       Clear per-entry cache
                     </button>
                   </div>
@@ -659,7 +773,7 @@ export default function AdminRegionsPage() {
         )}
 
         {/* ================================================================ */}
-        {/* Tab C — Add / Edit form                                          */}
+        {/* Tab C — Add / Edit form                                           */}
         {/* ================================================================ */}
         {activeTab === 'add' && (
           <div className="max-w-xl mx-auto">
@@ -670,7 +784,7 @@ export default function AdminRegionsPage() {
               <p className="text-gray-400 text-sm mb-5">
                 {editingPeriod
                   ? 'Editing this entry saves it as a custom override.'
-                  : 'New entries are saved as custom overrides — they take priority over static and AI-resolved mappings.'}
+                  : 'New entries are saved as custom overrides — highest priority over static and AI mappings.'}
               </p>
               <RegionForm
                 initialPeriod={editingPeriod ?? undefined}
@@ -711,10 +825,9 @@ function StatCard({
     blue:   'bg-blue-900/20 border-blue-800/40',
     teal:   'bg-teal-900/20 border-teal-800/40',
   }[color];
-
   return (
     <div className={`rounded-lg border p-4 ${cardBg}`}>
-      <p className={`${isText ? 'text-lg' : 'text-3xl'} font-bold ${valueColor}`}>{value}</p>
+      <p className={`${isText ? 'text-base' : 'text-3xl'} font-bold ${valueColor}`}>{value}</p>
       <p className="text-gray-300 text-sm mt-1 font-medium">{label}</p>
       {note && <p className="text-gray-500 text-xs mt-0.5">{note}</p>}
     </div>
