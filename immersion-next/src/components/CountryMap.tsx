@@ -128,12 +128,14 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
     const toFetch: string[] = [];
 
     mediaItems.forEach((item) => {
-      if (!item.country) return;
+      // Use explicit country field if set, otherwise fall back to timePeriod
+      const period = item.country || item.timePeriod;
+      if (!period) return;
       // Already resolved by static REGION_MAPPINGS → no async work needed
-      if (getCountriesForPeriod(item.country).length > 0) return;
+      if (getCountriesForPeriod(period).length > 0) return;
       // Already requested (or resolved) this session → skip
-      if (requestedRef.current.has(item.country)) return;
-      toFetch.push(item.country);
+      if (requestedRef.current.has(period)) return;
+      toFetch.push(period);
     });
 
     if (toFetch.length === 0) return;
@@ -142,20 +144,20 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
     toFetch.forEach((c) => requestedRef.current.add(c));
     setLoadingRegions((prev) => new Set([...prev, ...toFetch]));
 
-    toFetch.forEach(async (country) => {
+    toFetch.forEach(async (period) => {
       try {
         // getRegionsFromAI handles the full pipeline:
         //   REGION_MAPPINGS → regionCache_<period> localStorage → AI API → fallback
-        const result = await getRegionsFromAI(country);
+        const result = await getRegionsFromAI(period);
         if (result.countries.length > 0) {
-          setAiRegions((prev) => ({ ...prev, [country]: result.countries }));
+          setAiRegions((prev) => ({ ...prev, [period]: result.countries }));
         }
       } catch (err) {
-        console.error('[CountryMap] region lookup failed for', country, err);
+        console.error('[CountryMap] region lookup failed for', period, err);
       } finally {
         setLoadingRegions((prev) => {
           const next = new Set(prev);
-          next.delete(country);
+          next.delete(period);
           return next;
         });
       }
@@ -168,11 +170,12 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
   const highlightedNames = useMemo(() => {
     const codes = new Set<string>([...highlightedCountryCodes]);
     mediaItems.forEach((item) => {
-      if (item.country) {
+      const period = item.country || item.timePeriod;
+      if (period) {
         // Static REGION_MAPPINGS
-        getCountriesForPeriod(item.country).forEach((c) => codes.add(c));
+        getCountriesForPeriod(period).forEach((c) => codes.add(c));
         // AI-resolved codes (async, populated once the API call finishes)
-        (aiRegions[item.country] ?? []).forEach((c) => codes.add(c));
+        (aiRegions[period] ?? []).forEach((c) => codes.add(c));
       }
     });
     const names = new Set<string>();
@@ -189,29 +192,40 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
     const seen = new Set<string>();
     const names: string[] = [];
     mediaItems.forEach((item) => {
-      if (!item.country) return;
+      const period = item.country || item.timePeriod;
+      if (!period) return;
       // Skip bare ISO alpha-2 codes — those are individual countries, not named eras
-      if (item.country.trim().length === 2) return;
-      if (seen.has(item.country)) return;
+      if (period.trim().length === 2) return;
+      if (seen.has(period)) return;
       const inStatic =
-        REGION_MAPPINGS[item.country] !== undefined ||
+        REGION_MAPPINGS[period] !== undefined ||
         Object.keys(REGION_MAPPINGS).some(
-          (k) => k.toLowerCase() === item.country!.toLowerCase()
+          (k) => k.toLowerCase() === period.toLowerCase()
         );
-      const inAI = (aiRegions[item.country]?.length ?? 0) > 0;
+      const inAI = (aiRegions[period]?.length ?? 0) > 0;
       if (inStatic || inAI) {
-        seen.add(item.country);
-        names.push(item.country);
+        seen.add(period);
+        names.push(period);
       }
     });
     return names;
   }, [mediaItems, aiRegions]);
 
-  const mappedItems = mediaItems.filter(
+  // Items with explicit lat/lng coordinates get a pin on the map
+  const pinnedItems = mediaItems.filter(
     (item) => item.latitude !== undefined && item.longitude !== undefined
   );
+  // Items are "on map" if they have a pin OR a country/timePeriod that highlights a region
+  const mappedItems = mediaItems.filter(
+    (item) =>
+      (item.latitude !== undefined && item.longitude !== undefined) ||
+      !!(item.country || item.timePeriod)
+  );
   const unmappedItems = mediaItems.filter(
-    (item) => item.latitude === undefined || item.longitude === undefined
+    (item) =>
+      item.latitude === undefined &&
+      item.longitude === undefined &&
+      !(item.country || item.timePeriod)
   );
 
   const handleMoveEnd = (pos: { coordinates: [number, number]; zoom: number }) => {
@@ -348,8 +362,8 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
               }
             </Geographies>
 
-            {/* Media dots */}
-            {mappedItems.map((item) => {
+            {/* Media dots — only for items with explicit lat/lng coordinates */}
+            {pinnedItems.map((item) => {
               const color = getMediaColor(item.mediaType);
               return (
                 <Marker
@@ -399,8 +413,8 @@ export default function CountryMap({ mediaItems, onSelectItem, highlightedCountr
             }}
           >
             <p className="text-white font-semibold text-sm leading-tight">{tooltip.item.title}</p>
-            {tooltip.item.country && (
-              <p className="text-teal-400 text-xs mt-0.5">{tooltip.item.country}</p>
+            {(tooltip.item.country || tooltip.item.timePeriod) && (
+              <p className="text-teal-400 text-xs mt-0.5">{tooltip.item.country || tooltip.item.timePeriod}</p>
             )}
             <p className="text-gray-400 text-xs">
               {tooltip.item.startYear === tooltip.item.endYear
