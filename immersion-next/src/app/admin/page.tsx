@@ -202,10 +202,15 @@ export default function AdminPanel() {
       if (response.ok) {
         fetchMediaItems();
         alert('Item deleted successfully!');
+      } else {
+        const data = await response.json().catch(() => ({}));
+        const message = (data as { error?: string }).error ?? `Delete failed (HTTP ${response.status})`;
+        console.error('Error deleting item:', response.status, data);
+        alert(`Failed to delete item: ${message}`);
       }
     } catch (error) {
-      console.error('Error deleting item:', error);
-      alert('Failed to delete item');
+      console.error('Error deleting item (network):', error);
+      alert('Failed to delete item: network error — check console for details');
     }
   };
 
@@ -269,7 +274,7 @@ export default function AdminPanel() {
 
     try {
       const method = editingItem ? 'PUT' : 'POST';
-      const url = editingItem 
+      const url = editingItem
         ? `${API_URL}/media/${editingItem.mediaId}`
         : `${API_URL}/media`;
 
@@ -284,10 +289,15 @@ export default function AdminPanel() {
         setShowForm(false);
         setEditingItem(null);
         alert('Item saved successfully!');
+      } else {
+        const data = await response.json().catch(() => ({}));
+        const message = (data as { error?: string }).error ?? `Save failed (HTTP ${response.status})`;
+        console.error('Error saving item:', response.status, data);
+        alert(`Failed to save item: ${message}`);
       }
     } catch (error) {
-      console.error('Error saving item:', error);
-      alert('Failed to save item');
+      console.error('Error saving item (network):', error);
+      alert('Failed to save item: network error — check console for details');
     }
   };
 
