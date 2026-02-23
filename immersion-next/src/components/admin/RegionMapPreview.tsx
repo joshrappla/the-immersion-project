@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
@@ -32,8 +33,9 @@ interface Props {
 /**
  * Compact world map that highlights a set of countries.
  * Used in the regions admin interface to preview a mapping.
+ * Memoized — only re-renders when the countries array contents or height change.
  */
-export default function RegionMapPreview({ countries, height = 140 }: Props) {
+function RegionMapPreview({ countries, height = 140 }: Props) {
   const highlighted = new Set(
     countries.map((c) => ISO_A2_TO_NAME[c.toUpperCase()] ?? '')
   );
@@ -75,3 +77,11 @@ export default function RegionMapPreview({ countries, height = 140 }: Props) {
     </div>
   );
 }
+
+// Custom comparator: re-render only when height or country list content changes.
+// Array identity (===) changes on every parent render, so we compare contents.
+export default memo(RegionMapPreview, (prev, next) => {
+  if (prev.height !== next.height) return false;
+  if (prev.countries.length !== next.countries.length) return false;
+  return prev.countries.every((c, i) => c === next.countries[i]);
+});
