@@ -610,21 +610,7 @@ export default function VerticalTimeline() {
       )}
 
       {/* Bottom Legend */}
-      <div className="relative z-50 flex flex-col items-center justify-center gap-4 p-4 bg-black/50 backdrop-blur-sm border-t border-purple-900/30">
-        <div className="flex gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-gray-300">Games</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-purple-500" />
-            <span className="text-gray-300">Movies</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span className="text-gray-300">TV Shows</span>
-          </div>
-        </div>
+      <div className="relative z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm border-t border-purple-900/30">
         <p className="text-gray-500 text-xs text-center">
           ✨ Scroll through time • Tap to explore
         </p>
