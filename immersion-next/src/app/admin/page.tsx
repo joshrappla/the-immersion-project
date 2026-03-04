@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import RegionMappingsPanel from '@/components/RegionMappingsPanel';
 import { inferRegions, type InferenceResult } from '@/lib/regionInference';
 import InferencePreview, { InferencePreviewSkeleton } from '@/components/admin/InferencePreview';
+import { COUNTRY_OPTIONS, getCountryName } from '@/lib/countries';
 
 interface MediaItem {
   mediaId: string;
@@ -65,10 +66,8 @@ export default function AdminPanel() {
   const [formEndYear, setFormEndYear] = useState<number>(1100);
   const [inferenceResult, setInferenceResult] = useState<InferenceResult | null>(null);
   const [inferenceLoading, setInferenceLoading] = useState(false);
-  /** True when the user has clicked "Edit manually" and overridden the inference. */
-  const [inferenceOverridden, setInferenceOverridden] = useState(false);
-  /** Comma-separated country codes entered manually when overridden. */
-  const [manualCountriesStr, setManualCountriesStr] = useState('');
+  /** ISO alpha-2 codes selected for this item (drives the country picker). */
+  const [selectedCountryCodes, setSelectedCountryCodes] = useState<string[]>([]);
   const inferenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Batch re-analyze state ────────────────────────────────────────────────
@@ -126,8 +125,7 @@ export default function AdminPanel() {
       setFormEndYear(ey);
       setInferenceResult(null);
       setInferenceLoading(false);
-      setInferenceOverridden(false);
-      setManualCountriesStr(editingItem?.countryCodes?.join(', ') ?? '');
+      setSelectedCountryCodes(editingItem?.countryCodes ?? []);
     }
   }, [showForm, editingItem]);
 
@@ -138,7 +136,6 @@ export default function AdminPanel() {
       setInferenceLoading(false);
       return;
     }
-    if (inferenceOverridden) return; // user is editing manually — don't re-infer
 
     if (inferenceTimerRef.current) clearTimeout(inferenceTimerRef.current);
     setInferenceLoading(true);
@@ -162,7 +159,7 @@ export default function AdminPanel() {
     return () => {
       if (inferenceTimerRef.current) clearTimeout(inferenceTimerRef.current);
     };
-  }, [formEra, formStartYear, formEndYear, showForm, inferenceOverridden]);
+  }, [formEra, formStartYear, formEndYear, showForm]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,14 +237,6 @@ export default function AdminPanel() {
     const latVal = formData.get('latitude') as string;
     const lngVal = formData.get('longitude') as string;
 
-    // Resolve country codes from inference or manual override
-    const resolvedCodes: string[] = inferenceOverridden
-      ? manualCountriesStr
-          .split(',')
-          .map((s) => s.trim().toUpperCase())
-          .filter((s) => /^[A-Z]{2}$/.test(s))
-      : inferenceResult?.countries ?? [];
-
     const item = {
       mediaId: editingItem?.mediaId || `media_${Date.now()}`,
       title: formData.get('title') as string,
@@ -261,15 +250,14 @@ export default function AdminPanel() {
       ...(countryVal ? { country: countryVal } : {}),
       ...(latVal ? { latitude: parseFloat(latVal) } : {}),
       ...(lngVal ? { longitude: parseFloat(lngVal) } : {}),
-      ...(resolvedCodes.length > 0 ? { countryCodes: resolvedCodes } : {}),
-      ...(inferenceResult && !inferenceOverridden
+      ...(selectedCountryCodes.length > 0 ? { countryCodes: selectedCountryCodes } : {}),
+      ...(inferenceResult
         ? {
             inferenceSource:     inferenceResult.source,
             inferenceConfidence: inferenceResult.confidence,
             inferredAt:          inferenceResult.inferredAt,
           }
         : {}),
-      ...(inferenceOverridden ? { overriddenAt: Date.now(), inferenceSource: 'manual' as const } : {}),
     };
 
     try {
@@ -730,7 +718,6 @@ export default function AdminPanel() {
                       value={formEra}
                       onChange={(e) => {
                         setFormEra(e.target.value);
-                        setInferenceOverridden(false);
                       }}
                       required
                       placeholder="e.g. Viking Age"
@@ -749,7 +736,6 @@ export default function AdminPanel() {
                       value={formStartYear}
                       onChange={(e) => {
                         setFormStartYear(parseInt(e.target.value) || 0);
-                        setInferenceOverridden(false);
                       }}
                       required
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-purple-600 focus:outline-none"
@@ -765,7 +751,6 @@ export default function AdminPanel() {
                       value={formEndYear}
                       onChange={(e) => {
                         setFormEndYear(parseInt(e.target.value) || 0);
-                        setInferenceOverridden(false);
                       }}
                       required
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-purple-600 focus:outline-none"
@@ -773,56 +758,79 @@ export default function AdminPanel() {
                   </div>
                 </div>
 
-                {/* ── Auto-inference region panel ──────────────────────────────── */}
-                {formEra.trim() && (
-                  <div className="pt-1">
-                    {inferenceLoading ? (
+                {/* ── Country picker ──────────────────────────────────────────── */}
+                <div className="pt-2 border-t border-gray-700">
+                  <p className="text-sm font-semibold text-teal-400 mb-2 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 004 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Countries / Regions
+                  </p>
+
+                  {/* AI suggestion banner */}
+                  {formEra.trim() && (
+                    inferenceLoading ? (
                       <InferencePreviewSkeleton label="Analyzing historical context…" />
-                    ) : inferenceOverridden ? (
-                      <div className="rounded-lg border border-teal-700/50 bg-teal-900/20 p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-teal-300">Manual region override</span>
+                    ) : inferenceResult && inferenceResult.countries.length > 0 ? (
+                      <div className="mb-3 flex items-center gap-2 p-2 bg-indigo-900/30 border border-indigo-700/40 rounded-lg">
+                        <span className="text-xs text-indigo-300 flex-1">
+                          AI suggests: <span className="font-mono font-semibold">{inferenceResult.countries.map(c => getCountryName(c)).join(', ')}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCountryCodes(inferenceResult.countries)}
+                          className="text-xs px-2 py-1 bg-indigo-700 hover:bg-indigo-600 text-white rounded transition"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    ) : null
+                  )}
+
+                  {/* Selected country tags */}
+                  <div className="flex flex-wrap gap-2 min-h-[32px] mb-2">
+                    {selectedCountryCodes.length === 0 ? (
+                      <span className="text-xs text-gray-500 py-1">No countries selected</span>
+                    ) : (
+                      selectedCountryCodes.map((code) => (
+                        <span
+                          key={code}
+                          className="flex items-center gap-1 px-2 py-1 bg-teal-900/60 text-teal-300 rounded-full text-xs border border-teal-700"
+                        >
+                          {getCountryName(code)} ({code})
                           <button
                             type="button"
-                            onClick={() => {
-                              setInferenceOverridden(false);
-                              setManualCountriesStr('');
-                            }}
-                            className="text-xs text-gray-400 hover:text-gray-200 transition"
+                            onClick={() => setSelectedCountryCodes(prev => prev.filter(c => c !== code))}
+                            className="ml-0.5 text-teal-400 hover:text-white transition"
                           >
-                            ← Use AI suggestion
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                           </button>
-                        </div>
-                        <label htmlFor="manual-codes" className="block text-xs text-gray-400">
-                          ISO codes (comma-separated):
-                        </label>
-                        <input
-                          id="manual-codes"
-                          type="text"
-                          value={manualCountriesStr}
-                          onChange={(e) => setManualCountriesStr(e.target.value)}
-                          placeholder="e.g. IT, FR, DE"
-                          className="w-full px-2 py-1.5 bg-gray-800 border border-gray-600 text-white rounded text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono"
-                        />
-                        <p className="text-xs text-gray-500">
-                          Enter 2-letter ISO 3166-1 alpha-2 codes, comma-separated.
-                        </p>
-                      </div>
-                    ) : inferenceResult ? (
-                      <InferencePreview
-                        result={inferenceResult}
-                        onEditManually={() => {
-                          setInferenceOverridden(true);
-                          setManualCountriesStr(inferenceResult.countries.join(', '));
-                        }}
-                        onUseSuggestion={(codes) => {
-                          setInferenceOverridden(true);
-                          setManualCountriesStr(codes.join(', '));
-                        }}
-                      />
-                    ) : null}
+                        </span>
+                      ))
+                    )}
                   </div>
-                )}
+
+                  {/* Add country dropdown */}
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const code = e.target.value;
+                      if (code && !selectedCountryCodes.includes(code)) {
+                        setSelectedCountryCodes(prev => [...prev, code]);
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm"
+                  >
+                    <option value="">+ Add a country…</option>
+                    {COUNTRY_OPTIONS
+                      .filter(c => !selectedCountryCodes.includes(c.code))
+                      .map(c => (
+                        <option key={c.code} value={c.code}>{c.name}</option>
+                      ))}
+                  </select>
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-300">Description</label>
