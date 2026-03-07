@@ -44,7 +44,7 @@ export default function VerticalTimeline() {
   const [showContributeModal, setShowContributeModal] = useState(false);
   const [contributeTab, setContributeTab] = useState<'media' | 'feedback'>('media');
   const [timelineScale, setTimelineScale] = useState(1);
-  const [countryFilter, setCountryFilter] = useState('');
+  const [countryFilter, setCountryFilter] = useState<string[]>([]);
   const [musicOn, setMusicOn] = useState(false);
   const pinchStartRef = useRef<{ distance: number; scale: number } | null>(null);
   const timelineContainerRef = useRef<HTMLDivElement>(null);
@@ -189,13 +189,12 @@ export default function VerticalTimeline() {
   const filteredItems = mediaItems.filter(item => {
     const matchesType = !mediaTypeFilter || item.mediaType === mediaTypeFilter;
     const matchesEra = !eraFilter || item.timePeriod === eraFilter;
-    const matchesCountry = !countryFilter || (item.countryCodes?.includes(countryFilter) ?? false);
+    const matchesCountry = !countryFilter.length || countryFilter.some(c => item.countryCodes?.includes(c));
     return matchesType && matchesEra && matchesCountry;
   });
 
   const uniqueMediaTypes = Array.from(new Set(mediaItems.map(item => item.mediaType)));
   const uniqueEras = Array.from(new Set(mediaItems.map(item => item.timePeriod)));
-  const uniqueCountryCodes = [...new Set(mediaItems.flatMap(item => item.countryCodes ?? []))].sort();
 
   if (!mounted) {
     return null;
@@ -391,24 +390,29 @@ export default function VerticalTimeline() {
                   </select>
                 </label>
 
-                {uniqueCountryCodes.length > 0 && (
-                  <label className="block">
-                    <span className="text-gray-400 text-sm mb-1 block">Country</span>
-                    <select
-                      value={countryFilter}
-                      onChange={(e) => {
-                        setCountryFilter(e.target.value);
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg text-base border border-gray-700"
-                    >
-                      <option value="">All Countries</option>
-                      {uniqueCountryCodes.map((code) => (
-                        <option key={code} value={code}>{getCountryName(code)}</option>
+                <div>
+                  <span className="text-gray-400 text-sm mb-1 block">Country</span>
+                  {countryFilter.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {countryFilter.map(code => (
+                        <span key={code} className="flex items-center gap-1 px-2 py-1 bg-teal-900/60 text-teal-300 rounded-full text-xs border border-teal-700">
+                          {getCountryName(code)}
+                          <button onClick={() => setCountryFilter(prev => prev.filter(c => c !== code))} className="hover:text-white">✕</button>
+                        </span>
                       ))}
-                    </select>
-                  </label>
-                )}
+                    </div>
+                  )}
+                  <select
+                    value=""
+                    onChange={(e) => { if (e.target.value) setCountryFilter(prev => [...prev, e.target.value]); }}
+                    className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg text-base border border-gray-700"
+                  >
+                    <option value="">{countryFilter.length ? '+ Add country…' : 'All Countries'}</option>
+                    {COUNTRY_OPTIONS.filter(c => !countryFilter.includes(c.code)).map(c => (
+                      <option key={c.code} value={c.code}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Contribute */}
