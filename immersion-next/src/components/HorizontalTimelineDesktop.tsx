@@ -60,7 +60,7 @@ export default function HorizontalTimelineDesktop() {
   const [contributeTab, setContributeTab] = useState<'media' | 'feedback'>('media');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [musicOn, setMusicOn] = useState(false);
-  const [countryFilter, setCountryFilter] = useState('');
+  const [countryFilter, setCountryFilter] = useState<string[]>([]);
   const timelineRef = useRef<HTMLDivElement>(null);
   const zoomLevelRef = useRef(2);
   const minYearRef = useRef(0);
@@ -136,15 +136,13 @@ export default function HorizontalTimelineDesktop() {
   const filteredItems = mediaItems.filter((item) => {
     const typeMatch = !mediaTypeFilter || item.mediaType.toLowerCase() === mediaTypeFilter;
     const eraMatch = !eraFilter || item.timePeriod === eraFilter;
-    const countryMatch = !countryFilter || (item.countryCodes?.includes(countryFilter) ?? false);
+    const countryMatch = !countryFilter.length || countryFilter.some(c => item.countryCodes?.includes(c));
     return typeMatch && eraMatch && countryMatch;
   });
 
   // Get unique eras from data
   const uniqueEras = [...new Set(mediaItems.map(item => item.timePeriod))].sort();
 
-  // Get unique country codes that actually appear in the data
-  const uniqueCountryCodes = [...new Set(mediaItems.flatMap(item => item.countryCodes ?? []))].sort();
 
   // Calculate dynamic era range from actual data
   const eraRanges = useMemo(() => {
@@ -474,18 +472,24 @@ export default function HorizontalTimelineDesktop() {
             ))}
           </select>
 
-          {uniqueCountryCodes.length > 0 && (
+          <div className="flex items-center gap-1 flex-wrap">
+            {countryFilter.map(code => (
+              <span key={code} className="flex items-center gap-1 px-2 py-1 bg-teal-900/60 text-teal-300 rounded-full text-xs border border-teal-700">
+                {getCountryName(code)}
+                <button onClick={() => setCountryFilter(prev => prev.filter(c => c !== code))} className="hover:text-white">✕</button>
+              </span>
+            ))}
             <select
-              value={countryFilter}
-              onChange={(e) => setCountryFilter(e.target.value)}
-              className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 text-sm hover:bg-gray-700 transition"
+              value=""
+              onChange={(e) => { if (e.target.value) setCountryFilter(prev => [...prev, e.target.value]); }}
+              className="bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 text-sm hover:bg-gray-700 transition"
             >
-              <option value="">All Countries</option>
-              {uniqueCountryCodes.map((code) => (
-                <option key={code} value={code}>{getCountryName(code)}</option>
+              <option value="">{countryFilter.length ? '+ Country' : 'Country…'}</option>
+              {COUNTRY_OPTIONS.filter(c => !countryFilter.includes(c.code)).map(c => (
+                <option key={c.code} value={c.code}>{c.name}</option>
               ))}
             </select>
-          )}
+          </div>
 
           {/* Zoom Controls */}
           <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 rounded-lg border border-gray-700">
@@ -678,24 +682,29 @@ export default function HorizontalTimelineDesktop() {
               </div>
 
               {/* Country Filter */}
-              {uniqueCountryCodes.length > 0 && (
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">Country</label>
-                  <select
-                    value={countryFilter}
-                    onChange={(e) => {
-                      setCountryFilter(e.target.value);
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg border border-gray-700 text-base"
-                  >
-                    <option value="">All Countries</option>
-                    {uniqueCountryCodes.map((code) => (
-                      <option key={code} value={code}>{getCountryName(code)}</option>
+              <div>
+                <label className="block text-sm font-semibold text-white mb-2">Country</label>
+                {countryFilter.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {countryFilter.map(code => (
+                      <span key={code} className="flex items-center gap-1 px-2 py-1 bg-teal-900/60 text-teal-300 rounded-full text-xs border border-teal-700">
+                        {getCountryName(code)}
+                        <button onClick={() => setCountryFilter(prev => prev.filter(c => c !== code))} className="hover:text-white">✕</button>
+                      </span>
                     ))}
-                  </select>
-                </div>
-              )}
+                  </div>
+                )}
+                <select
+                  value=""
+                  onChange={(e) => { if (e.target.value) setCountryFilter(prev => [...prev, e.target.value]); }}
+                  className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg border border-gray-700 text-base"
+                >
+                  <option value="">{countryFilter.length ? '+ Add country…' : 'All Countries'}</option>
+                  {COUNTRY_OPTIONS.filter(c => !countryFilter.includes(c.code)).map(c => (
+                    <option key={c.code} value={c.code}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
 
               {/* Zoom Controls */}
               <div>
@@ -938,10 +947,10 @@ export default function HorizontalTimelineDesktop() {
               <span className="text-teal-400">Era: {eraFilter}</span>
             </>
           )}
-          {countryFilter && (
+          {countryFilter.length > 0 && (
             <>
               <span className="mx-2 md:mx-3">•</span>
-              <span className="text-teal-400">Country: {getCountryName(countryFilter)}</span>
+              <span className="text-teal-400">Countries: {countryFilter.map(c => getCountryName(c)).join(', ')}</span>
             </>
           )}
         </div>
