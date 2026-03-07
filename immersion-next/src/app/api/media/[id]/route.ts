@@ -102,14 +102,17 @@ export async function PUT(
   const lambdaUrl = `${lambdaBase}/media/${mediaId}`;
 
   // ── Attempt 1: send full body (works with updated Lambda) ─────────────────
-  let res = await fetch(lambdaUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(10_000),
-  }).catch((e: Error) => {
-    throw new Error(`Network error: ${e.message}`);
-  });
+  let res: Response;
+  try {
+    res = await fetch(lambdaUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch (e) {
+    return proxyError(`Lambda unreachable: ${(e as Error).message}`, 502);
+  }
 
   // ── Attempt 2: fallback — strip extended fields if Lambda rejects them ────
   // A 400 from the Lambda typically means it doesn't recognise the new fields.
@@ -129,14 +132,16 @@ export async function PUT(
 
       const baseBody = stripExtendedFields(body);
 
-      res = await fetch(lambdaUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(baseBody),
-        signal: AbortSignal.timeout(10_000),
-      }).catch((e: Error) => {
-        throw new Error(`Network error on retry: ${e.message}`);
-      });
+      try {
+        res = await fetch(lambdaUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(baseBody),
+          signal: AbortSignal.timeout(10_000),
+        });
+      } catch (e) {
+        return proxyError(`Lambda unreachable on retry: ${(e as Error).message}`, 502);
+      }
     }
   }
 
