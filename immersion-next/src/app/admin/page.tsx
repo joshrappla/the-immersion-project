@@ -87,7 +87,8 @@ export default function AdminPanel() {
   const loginStars = useMemo(() => generateStarfield(200), []);
   const adminStars = useMemo(() => generateStarfield(150), []);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  // Always use the Next.js proxy routes to avoid CORS issues with the Lambda.
+  const API_URL = '/api';
 
   // Fetch media items
   const fetchMediaItems = async () => {
