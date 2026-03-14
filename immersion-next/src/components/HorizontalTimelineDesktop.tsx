@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { COUNTRY_OPTIONS, getCountryName } from '@/lib/countries';
+import ParallaxBackground from '@/components/ParallaxBackground';
+import EraIndicator from '@/components/EraIndicator';
+import { useTimelineScroll } from '@/hooks/useTimelineScroll';
 
 interface MediaItem {
   mediaId: string;
@@ -32,17 +35,6 @@ interface PositionedMediaItem extends MediaItem {
   stackLevel: number;
 }
 
-// Generate starfield once
-const generateStarfield = (count: number) => {
-  return Array.from({ length: count }, (_, i) => ({
-    id: i,
-    left: Math.random() * 100,
-    top: Math.random() * 100,
-    opacity: Math.random() * 0.7 + 0.3,
-    delay: Math.random() * 3,
-    duration: Math.random() * 2 + 2,
-  }));
-};
 
 export default function HorizontalTimelineDesktop() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
@@ -66,8 +58,6 @@ export default function HorizontalTimelineDesktop() {
   const minYearRef = useRef(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Stable starfield - only generate on client
-  const stars = useMemo(() => generateStarfield(200), []);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -177,6 +167,15 @@ export default function HorizontalTimelineDesktop() {
   }
 
   const yearRange = maxYear - minYear;
+
+  // Parallax scroll tracking
+  const { scrollOffset, currentYear, currentEra } = useTimelineScroll({
+    containerRef: timelineRef,
+    minYear,
+    maxYear,
+    zoomLevel,
+    mode: 'horizontal',
+  });
 
   // Convert year to pixel position
   const yearToPixel = (year: number) => {
@@ -401,23 +400,18 @@ export default function HorizontalTimelineDesktop() {
 
   return (
     <div className="relative min-h-screen bg-black overflow-hidden">
-      {/* Starfield Background - Only render after mount to fix hydration */}
+      {/* Parallax Era Background */}
       {mounted && (
-        <div className="absolute inset-0 overflow-hidden">
-          {stars.map((star) => (
-            <div
-              key={star.id}
-              className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
-              style={{
-                left: `${star.left}%`,
-                top: `${star.top}%`,
-                opacity: star.opacity,
-                animationDelay: `${star.delay}s`,
-                animationDuration: `${star.duration}s`,
-              }}
-            />
-          ))}
-        </div>
+        <ParallaxBackground
+          scrollOffset={scrollOffset}
+          currentEra={currentEra}
+          mode="horizontal"
+        />
+      )}
+
+      {/* Era Indicator (bottom-left floating badge) */}
+      {mounted && (
+        <EraIndicator currentEra={currentEra} currentYear={currentYear} />
       )}
 
       {/* Header */}
@@ -754,8 +748,8 @@ export default function HorizontalTimelineDesktop() {
         </div>
       )}
 
-      {/* Timeline Container */}
-      <div className="relative h-[calc(100vh-180px)]">
+      {/* Timeline Container — dark scrim keeps cards readable over the parallax gradient */}
+      <div className="relative h-[calc(100vh-180px)] bg-black/25">
         <div
           ref={timelineRef}
           onWheel={handleWheel}
