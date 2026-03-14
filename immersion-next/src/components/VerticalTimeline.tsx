@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { COUNTRY_OPTIONS, getCountryName } from '@/lib/countries';
+import ParallaxBackground from '@/components/ParallaxBackground';
+import EraIndicator from '@/components/EraIndicator';
+import { useTimelineScroll } from '@/hooks/useTimelineScroll';
 
 interface MediaItem {
   mediaId: string;
@@ -20,17 +23,6 @@ interface MediaItem {
   countryCodes?: string[];
 }
 
-// Generate starfield once
-const generateStarfield = (count: number) => {
-  return Array.from({ length: count }, (_, i) => ({
-    id: i,
-    left: Math.random() * 100,
-    top: Math.random() * 100,
-    opacity: Math.random() * 0.7 + 0.3,
-    delay: Math.random() * 3,
-    duration: Math.random() * 2 + 2,
-  }));
-};
 
 export default function VerticalTimeline() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
@@ -50,7 +42,6 @@ export default function VerticalTimeline() {
   const timelineContainerRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const stars = useMemo(() => generateStarfield(200), []);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const eraColors: { [key: string]: string } = {
@@ -196,6 +187,19 @@ export default function VerticalTimeline() {
   const uniqueMediaTypes = Array.from(new Set(mediaItems.map(item => item.mediaType)));
   const uniqueEras = Array.from(new Set(mediaItems.map(item => item.timePeriod)));
 
+  // Year range for scroll-based era detection
+  const allYears = mediaItems.length > 0
+    ? { min: Math.min(...mediaItems.map(i => i.startYear)), max: Math.max(...mediaItems.map(i => i.endYear)) }
+    : { min: -500, max: 2025 };
+
+  // Parallax scroll tracking (vertical mode uses window.scrollY)
+  const { scrollOffset, currentYear, currentEra } = useTimelineScroll({
+    minYear: allYears.min,
+    maxYear: allYears.max,
+    zoomLevel: 1,
+    mode: 'vertical',
+  });
+
   if (!mounted) {
     return null;
   }
@@ -230,22 +234,15 @@ export default function VerticalTimeline() {
 
   return (
     <div className="relative min-h-screen bg-black overflow-x-hidden">
-      {/* Starfield Background */}
-      <div className="fixed inset-0 z-0">
-        {stars.map((star) => (
-          <div
-            key={star.id}
-            className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
-            style={{
-              left: `${star.left}%`,
-              top: `${star.top}%`,
-              opacity: star.opacity,
-              animationDelay: `${star.delay}s`,
-              animationDuration: `${star.duration}s`,
-            }}
-          />
-        ))}
-      </div>
+      {/* Parallax Era Background */}
+      <ParallaxBackground
+        scrollOffset={scrollOffset}
+        currentEra={currentEra}
+        mode="vertical"
+      />
+
+      {/* Era Indicator (bottom-left floating badge) */}
+      <EraIndicator currentEra={currentEra} currentYear={currentYear} />
 
       {/* Header */}
       <header className="sticky top-0 z-40 bg-black/80 backdrop-blur-sm border-b border-purple-900/30">
