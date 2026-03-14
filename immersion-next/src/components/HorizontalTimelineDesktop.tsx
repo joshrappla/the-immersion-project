@@ -748,8 +748,8 @@ export default function HorizontalTimelineDesktop() {
         </div>
       )}
 
-      {/* Timeline Container */}
-      <div className="relative h-[calc(100vh-180px)]">
+      {/* Timeline Container — dark scrim keeps cards readable over the parallax gradient */}
+      <div className="relative h-[calc(100vh-180px)] bg-black/25">
         <div
           ref={timelineRef}
           onWheel={handleWheel}

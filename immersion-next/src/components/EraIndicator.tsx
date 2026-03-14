@@ -33,7 +33,7 @@ export default function EraIndicator({ currentEra, currentYear }: EraIndicatorPr
 
   return (
     <div
-      className="fixed bottom-20 left-4 z-20 pointer-events-none select-none"
+      className="fixed bottom-24 left-4 z-20 pointer-events-none select-none"
       style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }}
     >
       <div

@@ -80,11 +80,14 @@ export default function ParallaxBackground({
   const bg    = getEraBackground(displayEra);
   const prevBg = fadeOutEra ? getEraBackground(fadeOutEra) : null;
 
-  // Parallax offsets — slower = further away
+  // Parallax offsets — lower speeds for vertical (pages can be 10k+ px tall)
   const axis = mode === 'horizontal' ? 'X' : 'Y';
-  const t1 = `translate${axis}(${-(scrollOffset * 0.04).toFixed(2)}px)`;
-  const t2 = `translate${axis}(${-(scrollOffset * 0.12).toFixed(2)}px)`;
-  const t3 = `translate${axis}(${-(scrollOffset * 0.22).toFixed(2)}px)`;
+  const [s1, s2, s3] = mode === 'horizontal'
+    ? [0.04, 0.12, 0.22]
+    : [0.012, 0.030, 0.055];
+  const t1 = `translate${axis}(${-(scrollOffset * s1).toFixed(2)}px)`;
+  const t2 = `translate${axis}(${-(scrollOffset * s2).toFixed(2)}px)`;
+  const t3 = `translate${axis}(${-(scrollOffset * s3).toFixed(2)}px)`;
 
   return (
     <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
