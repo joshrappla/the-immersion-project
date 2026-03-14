@@ -1,0 +1,40 @@
+<svg viewBox="0 0 1920 260" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+  <!-- Railway viaduct -->
+  <!-- Track bed -->
+  <rect x="0" y="80" width="1920" height="28" fill="#111827" opacity="0.88"/>
+  <!-- Rail ties -->
+  <g fill="#0d1520" opacity="0.7">
+    <rect x="0" y="83" width="14" height="22"/><rect x="25" y="83" width="14" height="22"/><rect x="50" y="83" width="14" height="22"/>
+    <rect x="75" y="83" width="14" height="22"/><rect x="100" y="83" width="14" height="22"/><rect x="125" y="83" width="14" height="22"/>
+    <!-- Continue every 25px across 1920... represented by pattern -->
+  </g>
+  <!-- Viaduct arches and piers -->
+  <g fill="#111827" opacity="0.9">
+    <rect x="0" y="108" width="55" height="152"/>
+    <path d="M55,155 Q130,100 205,155 L205,108 L55,108Z"/>
+    <rect x="205" y="108" width="55" height="152"/>
+    <path d="M260,155 Q335,100 410,155 L410,108 L260,108Z"/>
+    <rect x="410" y="108" width="55" height="152"/>
+    <path d="M465,155 Q540,100 615,155 L615,108 L465,108Z"/>
+    <rect x="615" y="108" width="55" height="152"/>
+    <path d="M670,155 Q745,100 820,155 L820,108 L670,108Z"/>
+    <rect x="820" y="108" width="55" height="152"/>
+    <path d="M875,155 Q950,100 1025,155 L1025,108 L875,108Z"/>
+    <rect x="1025" y="108" width="55" height="152"/>
+    <path d="M1080,155 Q1155,100 1230,155 L1230,108 L1080,108Z"/>
+    <rect x="1230" y="108" width="55" height="152"/>
+    <path d="M1285,155 Q1360,100 1435,155 L1435,108 L1285,108Z"/>
+    <rect x="1435" y="108" width="55" height="152"/>
+    <path d="M1490,155 Q1565,100 1640,155 L1640,108 L1490,108Z"/>
+    <rect x="1640" y="108" width="55" height="152"/>
+    <path d="M1695,155 Q1770,100 1845,155 L1845,108 L1695,108Z"/>
+    <rect x="1845" y="108" width="75" height="152"/>
+  </g>
+  <rect width="1920" height="260" fill="url(#fade)"/>
+</svg>

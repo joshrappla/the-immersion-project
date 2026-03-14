@@ -10,12 +10,21 @@ export interface ParticleConfig {
   blur: number;
 }
 
+export interface EraLayer {
+  image: string;
+  speed: number;   // parallax multiplier (0 = fixed, 1 = 1:1 with scroll)
+  opacity: number;
+  height: string;  // CSS height (e.g. '60%')
+  blendMode?: string;
+}
+
 export interface EraBackground {
   gradient: string;
   accentColor: string;
   name: string;
   years: [number, number];
   particles: ParticleConfig;
+  layers: EraLayer[];
 }
 
 // ── Shared particle presets ────────────────────────────────────────────────────
@@ -70,6 +79,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Ancient World',
     years: [-3000, 500],
     particles: DUST_GOLDEN,
+    layers: [
+      { image: '/backgrounds/ancient/back-pyramids.svg', speed: 0.08, opacity: 0.75, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/ancient/mid-columns.svg',   speed: 0.20, opacity: 0.60, height: '45%', blendMode: 'screen' },
+      { image: '/backgrounds/ancient/front-sand.svg',    speed: 0.40, opacity: 0.55, height: '28%', blendMode: 'screen' },
+    ],
   },
   'Ancient Rome': {
     gradient: 'linear-gradient(135deg, #7f1d1d 0%, #92400e 50%, #57534e 100%)',
@@ -77,6 +91,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Roman Empire',
     years: [-753, 476],
     particles: DUST_MARBLE,
+    layers: [
+      { image: '/backgrounds/roman/back-colosseum.svg', speed: 0.08, opacity: 0.72, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/roman/mid-aqueduct.svg',   speed: 0.20, opacity: 0.55, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/roman/front-columns.svg',  speed: 0.38, opacity: 0.50, height: '30%', blendMode: 'screen' },
+    ],
   },
   'Ancient Greece': {
     gradient: 'linear-gradient(135deg, #0c4a6e 0%, #1d4ed8 50%, #475569 100%)',
@@ -84,6 +103,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Ancient Greece',
     years: [-800, -31],
     particles: DUST_BLUE,
+    layers: [
+      { image: '/backgrounds/ancient/back-pyramids.svg', speed: 0.08, opacity: 0.55, height: '60%', blendMode: 'screen' },
+      { image: '/backgrounds/ancient/mid-columns.svg',   speed: 0.20, opacity: 0.60, height: '45%', blendMode: 'screen' },
+      { image: '/backgrounds/roman/front-columns.svg',   speed: 0.38, opacity: 0.45, height: '28%', blendMode: 'screen' },
+    ],
   },
   'Viking Age': {
     gradient: 'linear-gradient(135deg, #0f172a 0%, #164e63 45%, #1e3a5f 100%)',
@@ -91,6 +115,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Viking Age',
     years: [793, 1066],
     particles: SNOW,
+    layers: [
+      { image: '/backgrounds/viking/back-mountains.svg', speed: 0.06, opacity: 0.80, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/viking/mid-longship.svg',   speed: 0.18, opacity: 0.65, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/viking/front-waves.svg',    speed: 0.35, opacity: 0.55, height: '32%', blendMode: 'screen' },
+    ],
   },
   'Medieval Period': {
     gradient: 'linear-gradient(135deg, #1c1917 0%, #064e3b 50%, #1e293b 100%)',
@@ -98,6 +127,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Medieval Era',
     years: [500, 1500],
     particles: MIST,
+    layers: [
+      { image: '/backgrounds/medieval/back-castle.svg', speed: 0.07, opacity: 0.78, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/medieval/mid-forest.svg',  speed: 0.18, opacity: 0.65, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/medieval/front-fog.svg',   speed: 0.32, opacity: 0.55, height: '28%', blendMode: 'screen' },
+    ],
   },
   'The Crusades': {
     gradient: 'linear-gradient(135deg, #1c1917 0%, #134e4a 50%, #450a0a 100%)',
@@ -105,6 +139,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'The Crusades',
     years: [1095, 1291],
     particles: EMBERS,
+    layers: [
+      { image: '/backgrounds/medieval/back-castle.svg', speed: 0.07, opacity: 0.72, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/medieval/mid-forest.svg',  speed: 0.18, opacity: 0.58, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/medieval/front-fog.svg',   speed: 0.32, opacity: 0.50, height: '28%', blendMode: 'screen' },
+    ],
   },
   'Third Crusade': {
     gradient: 'linear-gradient(135deg, #1c1917 0%, #134e4a 50%, #450a0a 100%)',
@@ -112,6 +151,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'The Crusades',
     years: [1189, 1192],
     particles: EMBERS,
+    layers: [
+      { image: '/backgrounds/medieval/back-castle.svg', speed: 0.07, opacity: 0.72, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/medieval/mid-forest.svg',  speed: 0.18, opacity: 0.58, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/medieval/front-fog.svg',   speed: 0.32, opacity: 0.50, height: '28%', blendMode: 'screen' },
+    ],
   },
   'Renaissance': {
     gradient: 'linear-gradient(135deg, #92400e 0%, #9f1239 50%, #581c87 100%)',
@@ -119,6 +163,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Renaissance',
     years: [1400, 1600],
     particles: { ...DUST_GOLDEN, color: '#fcd34d', count: 30, speed: 0.2, opacity: 0.50 },
+    layers: [
+      { image: '/backgrounds/renaissance/back-florence.svg', speed: 0.07, opacity: 0.75, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/renaissance/mid-arches.svg',    speed: 0.18, opacity: 0.60, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/renaissance/front-curtain.svg', speed: 0.30, opacity: 0.50, height: '32%', blendMode: 'screen' },
+    ],
   },
   'Italian Renaissance': {
     gradient: 'linear-gradient(135deg, #92400e 0%, #9f1239 50%, #581c87 100%)',
@@ -126,6 +175,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Italian Renaissance',
     years: [1400, 1600],
     particles: { ...DUST_GOLDEN, color: '#fcd34d', count: 30, speed: 0.2, opacity: 0.50 },
+    layers: [
+      { image: '/backgrounds/renaissance/back-florence.svg', speed: 0.07, opacity: 0.75, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/renaissance/mid-arches.svg',    speed: 0.18, opacity: 0.60, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/renaissance/front-curtain.svg', speed: 0.30, opacity: 0.50, height: '32%', blendMode: 'screen' },
+    ],
   },
   'Colonial Era': {
     gradient: 'linear-gradient(135deg, #78350f 0%, #b45309 50%, #134e4a 100%)',
@@ -133,6 +187,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Age of Exploration',
     years: [1500, 1800],
     particles: LEAVES,
+    layers: [
+      { image: '/backgrounds/colonial/back-ships.svg', speed: 0.08, opacity: 0.75, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/colonial/mid-port.svg',   speed: 0.20, opacity: 0.62, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/colonial/front-waves.svg',speed: 0.38, opacity: 0.55, height: '30%', blendMode: 'screen' },
+    ],
   },
   'Industrial Revolution': {
     gradient: 'linear-gradient(135deg, #1f2937 0%, #374151 50%, #52525b 100%)',
@@ -140,6 +199,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Industrial Revolution',
     years: [1760, 1840],
     particles: SMOKE,
+    layers: [
+      { image: '/backgrounds/industrial/back-factories.svg', speed: 0.07, opacity: 0.78, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/industrial/mid-bridge.svg',     speed: 0.18, opacity: 0.62, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/industrial/front-steam.svg',    speed: 0.32, opacity: 0.52, height: '30%', blendMode: 'screen' },
+    ],
   },
   'Industrial Age': {
     gradient: 'linear-gradient(135deg, #1f2937 0%, #374151 50%, #52525b 100%)',
@@ -147,6 +211,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Industrial Age',
     years: [1760, 1900],
     particles: SMOKE,
+    layers: [
+      { image: '/backgrounds/industrial/back-factories.svg', speed: 0.07, opacity: 0.78, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/industrial/mid-bridge.svg',     speed: 0.18, opacity: 0.62, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/industrial/front-steam.svg',    speed: 0.32, opacity: 0.52, height: '30%', blendMode: 'screen' },
+    ],
   },
   'World War Era': {
     gradient: 'linear-gradient(135deg, #0f172a 0%, #450a0a 50%, #1f2937 100%)',
@@ -154,6 +223,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'World Wars',
     years: [1914, 1945],
     particles: { ...EMBERS, color: '#ef4444', count: 55, speed: 1.2 },
+    layers: [
+      { image: '/backgrounds/worldwar/back-cityscape.svg', speed: 0.07, opacity: 0.80, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/worldwar/mid-ruins.svg',      speed: 0.18, opacity: 0.65, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/worldwar/front-debris.svg',   speed: 0.32, opacity: 0.55, height: '30%', blendMode: 'screen' },
+    ],
   },
   'Post-WWI': {
     gradient: 'linear-gradient(135deg, #0f172a 0%, #450a0a 50%, #1f2937 100%)',
@@ -161,6 +235,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Post-War Era',
     years: [1918, 1950],
     particles: { ...SMOKE, color: '#6b7280', count: 18, opacity: 0.18 },
+    layers: [
+      { image: '/backgrounds/worldwar/back-cityscape.svg', speed: 0.07, opacity: 0.72, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/worldwar/mid-ruins.svg',      speed: 0.18, opacity: 0.58, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/worldwar/front-debris.svg',   speed: 0.32, opacity: 0.48, height: '30%', blendMode: 'screen' },
+    ],
   },
   'Modern Era': {
     gradient: 'linear-gradient(135deg, #1e1b4b 0%, #5b21b6 50%, #701a75 100%)',
@@ -168,6 +247,11 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Modern Era',
     years: [1945, 2025],
     particles: STARS_MODERN,
+    layers: [
+      { image: '/backgrounds/modern/back-skyline.svg',   speed: 0.06, opacity: 0.75, height: '65%', blendMode: 'screen' },
+      { image: '/backgrounds/modern/mid-buildings.svg',  speed: 0.16, opacity: 0.60, height: '48%', blendMode: 'screen' },
+      { image: '/backgrounds/modern/front-lights.svg',   speed: 0.28, opacity: 0.52, height: '30%', blendMode: 'screen' },
+    ],
   },
   'Wild West': {
     gradient: 'linear-gradient(135deg, #78350f 0%, #b45309 50%, #92400e 100%)',
@@ -175,13 +259,21 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'Wild West',
     years: [1865, 1900],
     particles: DUST_SANDY,
+    layers: [
+      { image: '/backgrounds/ancient/back-pyramids.svg', speed: 0.08, opacity: 0.50, height: '60%', blendMode: 'screen' },
+      { image: '/backgrounds/ancient/front-sand.svg',    speed: 0.32, opacity: 0.55, height: '28%', blendMode: 'screen' },
+    ],
   },
   'Meiji Restoration': {
     gradient: 'linear-gradient(135deg, #064e3b 0%, #0f766e 50%, #1e1b4b 100%)',
     accentColor: '#2dd4bf',
     name: 'Meiji Restoration',
     years: [1868, 1912],
-    particles: { ...LEAVES, color: '#fda4af', count: 25, opacity: 0.55 }, // cherry blossom
+    particles: { ...LEAVES, color: '#fda4af', count: 25, opacity: 0.55 },
+    layers: [
+      { image: '/backgrounds/medieval/back-castle.svg', speed: 0.07, opacity: 0.55, height: '60%', blendMode: 'screen' },
+      { image: '/backgrounds/medieval/mid-forest.svg',  speed: 0.18, opacity: 0.50, height: '45%', blendMode: 'screen' },
+    ],
   },
   'American Revolution': {
     gradient: 'linear-gradient(135deg, #1e3a5f 0%, #1e40af 50%, #4338ca 100%)',
@@ -189,6 +281,10 @@ export const ERA_BACKGROUNDS: Record<string, EraBackground> = {
     name: 'American Revolution',
     years: [1775, 1783],
     particles: DUST_MARBLE,
+    layers: [
+      { image: '/backgrounds/colonial/back-ships.svg', speed: 0.08, opacity: 0.65, height: '60%', blendMode: 'screen' },
+      { image: '/backgrounds/colonial/mid-port.svg',   speed: 0.20, opacity: 0.52, height: '45%', blendMode: 'screen' },
+    ],
   },
 };
 
@@ -201,6 +297,7 @@ const DEFAULT_BACKGROUND: EraBackground = {
     type: 'stars', count: 30, color: '#94a3b8',
     minSize: 0.5, maxSize: 2, speed: 0.05, direction: 'random', opacity: 0.40, blur: 0,
   },
+  layers: [],
 };
 
 export function getEraBackground(era: string): EraBackground {

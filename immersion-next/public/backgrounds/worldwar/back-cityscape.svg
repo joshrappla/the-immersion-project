@@ -1,0 +1,46 @@
+<svg viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.8"/>
+    </linearGradient>
+  </defs>
+  <!-- Damaged cityscape -->
+  <g fill="#1a0505" opacity="0.88">
+    <!-- Buildings - various heights, some with damage (irregular tops) -->
+    <rect x="0" y="180" width="80" height="220"/>
+    <rect x="90" y="220" width="65" height="180"/>
+    <!-- Damaged building - jagged top -->
+    <polygon points="165,160 165,400 235,400 235,200 220,175 205,195 190,165"/>
+    <rect x="245" y="190" width="90" height="210"/>
+    <rect x="345" y="150" width="70" height="250"/>
+    <!-- Ruined wall -->
+    <polygon points="425,200 425,400 490,400 490,220 475,205 460,215 445,200"/>
+    <rect x="500" y="170" width="100" height="230"/>
+    <rect x="610" y="200" width="75" height="200"/>
+    <polygon points="695,180 695,400 760,400 760,195 745,175 728,188 710,172"/>
+    <rect x="770" y="210" width="85" height="190"/>
+    <rect x="865" y="165" width="95" height="235"/>
+    <rect x="970" y="190" width="80" height="210"/>
+    <polygon points="1060,175 1060,400 1130,400 1130,190 1112,165 1095,182 1075,162"/>
+    <rect x="1140" y="200" width="90" height="200"/>
+    <rect x="1240" y="170" width="75" height="230"/>
+    <rect x="1325" y="215" width="85" height="185"/>
+    <polygon points="1420,180 1420,400 1490,400 1490,200 1470,178 1450,192 1435,175"/>
+    <rect x="1500" y="195" width="100" height="205"/>
+    <rect x="1610" y="175" width="80" height="225"/>
+    <rect x="1700" y="210" width="70" height="190"/>
+    <rect x="1780" y="185" width="90" height="215"/>
+    <rect x="1880" y="200" width="40" height="200"/>
+    <!-- Rubble mounds -->
+    <ellipse cx="260" cy="400" rx="80" ry="25" opacity="0.9"/>
+    <ellipse cx="720" cy="400" rx="90" ry="28" opacity="0.9"/>
+    <ellipse cx="1100" cy="400" rx="100" ry="30" opacity="0.9"/>
+    <ellipse cx="1600" cy="400" rx="85" ry="26" opacity="0.9"/>
+  </g>
+  <!-- Smoke columns -->
+  <ellipse cx="400" cy="140" rx="45" ry="80" fill="#1f2937" opacity="0.22"/>
+  <ellipse cx="900" cy="120" rx="50" ry="90" fill="#1f2937" opacity="0.2"/>
+  <ellipse cx="1400" cy="130" rx="42" ry="75" fill="#1f2937" opacity="0.2"/>
+  <rect width="1920" height="400" fill="url(#fade)"/>
+</svg>

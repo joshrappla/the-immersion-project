@@ -1,0 +1,41 @@
+<svg viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.75"/>
+    </linearGradient>
+  </defs>
+  <!-- Hill -->
+  <ellipse cx="960" cy="420" rx="700" ry="180" fill="#0d1f0e" opacity="0.9"/>
+  <!-- Castle main keep -->
+  <rect x="820" y="160" width="280" height="240" fill="#0a1a0b" opacity="0.95"/>
+  <!-- Battlements on keep -->
+  <rect x="820" y="145" width="35" height="30" fill="#0a1a0b"/>
+  <rect x="870" y="145" width="35" height="30" fill="#0a1a0b"/>
+  <rect x="920" y="145" width="35" height="30" fill="#0a1a0b"/>
+  <rect x="970" y="145" width="35" height="30" fill="#0a1a0b"/>
+  <rect x="1020" y="145" width="35" height="30" fill="#0a1a0b"/>
+  <rect x="1065" y="145" width="35" height="30" fill="#0a1a0b"/>
+  <!-- Gate arch -->
+  <rect x="915" y="300" width="90" height="100" fill="#040d05"/>
+  <path d="M915,300 Q960,255 1005,300Z" fill="#040d05"/>
+  <!-- Left tower -->
+  <rect x="730" y="220" width="100" height="180" fill="#0a1a0b" opacity="0.9"/>
+  <rect x="730" y="205" width="22" height="25" fill="#0a1a0b"/>
+  <rect x="757" y="205" width="22" height="25" fill="#0a1a0b"/>
+  <rect x="784" y="205" width="22" height="25" fill="#0a1a0b"/>
+  <rect x="808" y="205" width="22" height="25" fill="#0a1a0b"/>
+  <!-- Right tower -->
+  <rect x="1090" y="220" width="100" height="180" fill="#0a1a0b" opacity="0.9"/>
+  <rect x="1090" y="205" width="22" height="25" fill="#0a1a0b"/>
+  <rect x="1117" y="205" width="22" height="25" fill="#0a1a0b"/>
+  <rect x="1144" y="205" width="22" height="25" fill="#0a1a0b"/>
+  <rect x="1168" y="205" width="22" height="25" fill="#0a1a0b"/>
+  <!-- Cathedral spire left -->
+  <rect x="460" y="250" width="60" height="150" fill="#0a1a0b" opacity="0.7"/>
+  <polygon points="460,250 490,170 520,250" fill="#0a1a0b" opacity="0.7"/>
+  <!-- Cathedral spire right -->
+  <rect x="1380" y="260" width="55" height="140" fill="#0a1a0b" opacity="0.65"/>
+  <polygon points="1380,260 1407,185 1435,260" fill="#0a1a0b" opacity="0.65"/>
+  <rect width="1920" height="400" fill="url(#fade)"/>
+</svg>

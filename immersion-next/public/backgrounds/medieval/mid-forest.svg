@@ -1,0 +1,55 @@
+<svg viewBox="0 0 1920 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.65"/>
+    </linearGradient>
+  </defs>
+  <!-- Dense treeline -->
+  <g fill="#071008" opacity="0.92">
+    <!-- Left cluster -->
+    <polygon points="0,280 30,160 60,280"/>
+    <polygon points="20,280 50,140 80,280"/>
+    <polygon points="50,280 80,155 110,280"/>
+    <polygon points="80,280 112,145 144,280"/>
+    <polygon points="110,280 142,160 174,280"/>
+    <polygon points="145,280 178,148 211,280"/>
+    <polygon points="180,280 215,155 250,280"/>
+    <polygon points="215,280 248,168 281,280"/>
+    <polygon points="245,280 280,150 315,280"/>
+    <!-- Mid section -->
+    <polygon points="310,280 350,142 390,280"/>
+    <polygon points="355,280 392,158 429,280"/>
+    <polygon points="395,280 432,148 469,280"/>
+    <polygon points="440,280 478,155 516,280"/>
+    <polygon points="500,280 540,138 580,280"/>
+    <polygon points="550,280 588,152 626,280"/>
+    <polygon points="600,280 640,145 680,280"/>
+    <polygon points="655,280 695,158 735,280"/>
+    <polygon points="710,280 748,148 786,280"/>
+    <!-- Gap for mid structure -->
+    <polygon points="800,280 838,160 876,280"/>
+    <polygon points="850,280 888,150 926,280"/>
+    <!-- Right side -->
+    <polygon points="1000,280 1040,145 1080,280"/>
+    <polygon points="1060,280 1098,158 1136,280"/>
+    <polygon points="1120,280 1158,148 1196,280"/>
+    <polygon points="1180,280 1218,160 1256,280"/>
+    <polygon points="1240,280 1280,142 1320,280"/>
+    <polygon points="1310,280 1350,155 1390,280"/>
+    <polygon points="1380,280 1418,148 1456,280"/>
+    <polygon points="1450,280 1488,162 1526,280"/>
+    <polygon points="1520,280 1558,148 1596,280"/>
+    <polygon points="1590,280 1628,155 1666,280"/>
+    <polygon points="1660,280 1698,145 1736,280"/>
+    <polygon points="1730,280 1768,160 1806,280"/>
+    <polygon points="1800,280 1840,150 1880,280"/>
+    <polygon points="1870,280 1895,165 1920,280"/>
+  </g>
+  <!-- Village buildings peeking through -->
+  <rect x="850" y="220" width="70" height="60" fill="#071008" opacity="0.85"/>
+  <polygon points="840,220 885,185 930,220" fill="#071008" opacity="0.85"/>
+  <rect x="955" y="225" width="55" height="55" fill="#071008" opacity="0.8"/>
+  <polygon points="945,225 982,195 1020,225" fill="#071008" opacity="0.8"/>
+  <rect width="1920" height="280" fill="url(#fade)"/>
+</svg>

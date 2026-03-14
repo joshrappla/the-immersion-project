@@ -1,0 +1,60 @@
+<svg viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>
+  <!-- Modern skyscraper skyline -->
+  <g fill="#0f0b2e" opacity="0.88">
+    <rect x="0" y="250" width="55" height="150"/>
+    <rect x="65" y="200" width="45" height="200"/>
+    <rect x="120" y="280" width="40" height="120"/>
+    <rect x="170" y="180" width="60" height="220"/>
+    <!-- Empire state style -->
+    <rect x="240" y="100" width="70" height="300"/>
+    <rect x="255" y="70" width="40" height="35"/>
+    <rect x="265" y="45" width="20" height="28"/>
+    <rect x="272" y="28" width="6" height="20"/>
+    <rect x="320" y="220" width="55" height="180"/>
+    <rect x="385" y="160" width="65" height="240"/>
+    <rect x="460" y="240" width="50" height="160"/>
+    <!-- Tall tower -->
+    <rect x="520" y="80" width="75" height="320"/>
+    <rect x="535" y="55" width="45" height="30"/>
+    <rect x="545" y="30" width="25" height="28"/>
+    <rect x="553" y="10" width="9" height="22"/>
+    <rect x="605" y="200" width="60" height="200"/>
+    <rect x="675" y="170" width="55" height="230"/>
+    <rect x="740" y="230" width="48" height="170"/>
+    <rect x="798" y="120" width="80" height="280"/>
+    <rect x="888" y="250" width="45" height="150"/>
+    <!-- Glass tower -->
+    <rect x="943" y="90" width="85" height="310"/>
+    <rect x="955" y="65" width="62" height="30"/>
+    <rect x="968" y="42" width="36" height="26"/>
+    <rect x="1038" y="190" width="60" height="210"/>
+    <rect x="1108" y="160" width="70" height="240"/>
+    <rect x="1188" y="240" width="50" height="160"/>
+    <rect x="1248" y="100" width="75" height="300"/>
+    <rect x="1263" y="75" width="45" height="28"/>
+    <rect x="1273" y="52" width="25" height="25"/>
+    <rect x="1333" y="220" width="55" height="180"/>
+    <rect x="1398" y="180" width="65" height="220"/>
+    <rect x="1473" y="250" width="48" height="150"/>
+    <rect x="1531" y="110" width="80" height="290"/>
+    <rect x="1621" y="200" width="55" height="200"/>
+    <rect x="1686" y="170" width="70" height="230"/>
+    <rect x="1766" y="240" width="50" height="160"/>
+    <rect x="1826" y="130" width="65" height="270"/>
+    <rect x="1901" y="210" width="19" height="190"/>
+    <!-- Window light grids (subtle) -->
+  </g>
+  <!-- Window lights -->
+  <g fill="#a78bfa" opacity="0.08">
+    <rect x="245" y="110" width="60" height="280"/>
+    <rect x="525" y="90" width="65" height="310"/>
+    <rect x="950" y="100" width="70" height="300"/>
+  </g>
+  <rect width="1920" height="400" fill="url(#fade)"/>
+</svg>

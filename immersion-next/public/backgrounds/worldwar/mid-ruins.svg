@@ -1,0 +1,36 @@
+<svg viewBox="0 0 1920 260" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.65"/>
+    </linearGradient>
+  </defs>
+  <!-- Ruined walls and debris -->
+  <g fill="#1a0505" opacity="0.9">
+    <!-- Watchtower remains -->
+    <rect x="80" y="80" width="55" height="180"/>
+    <polygon points="75,80 107,50 135,80"/><!-- battlement -->
+    <!-- Broken wall section -->
+    <polygon points="145,260 145,160 200,120 260,155 320,130 360,170 360,260"/>
+    <!-- Ruined building -->
+    <rect x="400" y="140" width="120" height="120"/>
+    <polygon points="390,140 460,95 530,140"/>
+    <!-- Partial wall with hole -->
+    <rect x="560" y="120" width="180" height="140"/>
+    <polygon points="600,180 600,200 640,200 640,180" fill="#100303"/><!-- window hole -->
+    <!-- Collapsed section -->
+    <polygon points="750,260 750,160 800,140 860,160 900,145 940,170 940,260"/>
+    <!-- Watchtower right -->
+    <rect x="1050" y="90" width="50" height="170"/>
+    <polygon points="1045,90 1075,60 1105,90"/>
+    <!-- More walls -->
+    <polygon points="1120,260 1120,150 1180,125 1250,150 1310,130 1360,165 1360,260"/>
+    <rect x="1400" y="130" width="100" height="130"/>
+    <polygon points="1510,260 1510,155 1570,130 1640,155 1700,140 1740,168 1740,260"/>
+    <!-- Rubble heap -->
+    <ellipse cx="500" cy="255" rx="60" ry="18"/>
+    <ellipse cx="1000" cy="258" rx="70" ry="20"/>
+    <ellipse cx="1500" cy="255" rx="65" ry="18"/>
+  </g>
+  <rect width="1920" height="260" fill="url(#fade)"/>
+</svg>

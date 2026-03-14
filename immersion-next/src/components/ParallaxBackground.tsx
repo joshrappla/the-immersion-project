@@ -83,7 +83,7 @@ export default function ParallaxBackground({
   const bg    = getEraBackground(displayEra);
   const prevBg = fadeOutEra ? getEraBackground(fadeOutEra) : null;
 
-  // Parallax offsets — lower speeds for vertical (pages can be 10k+ px tall)
+  // Parallax offsets for ambient blobs — lower speeds for vertical
   const axis = mode === 'horizontal' ? 'X' : 'Y';
   const [s1, s2, s3] = mode === 'horizontal'
     ? [0.04, 0.12, 0.22]
@@ -91,6 +91,42 @@ export default function ParallaxBackground({
   const t1 = `translate${axis}(${-(scrollOffset * s1).toFixed(2)}px)`;
   const t2 = `translate${axis}(${-(scrollOffset * s2).toFixed(2)}px)`;
   const t3 = `translate${axis}(${-(scrollOffset * s3).toFixed(2)}px)`;
+
+  // Image layer parallax: compute horizontal or vertical offset per speed
+  function layerTranslate(speed: number) {
+    if (mode === 'horizontal') {
+      return `translateX(${-(scrollOffset * speed).toFixed(2)}px)`;
+    }
+    // Vertical: much gentler so layers don't fly off on tall pages
+    return `translateY(${-(scrollOffset * speed * 0.25).toFixed(2)}px)`;
+  }
+
+  // Render SVG silhouette layers for an era (outgoing or current)
+  function renderEraLayers(eraBg: typeof bg, opacity: number) {
+    if (!eraBg.layers || eraBg.layers.length === 0) return null;
+    return eraBg.layers.map((layer, i) => (
+      <div
+        key={i}
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: '-10%',
+          width: '120%',
+          height: layer.height,
+          opacity: layer.opacity * opacity,
+          transform: layerTranslate(layer.speed),
+          transition: 'opacity 0.1s',
+          willChange: 'transform',
+          mixBlendMode: (layer.blendMode as React.CSSProperties['mixBlendMode']) ?? 'screen',
+          backgroundImage: `url(${layer.image})`,
+          backgroundRepeat: 'repeat-x',
+          backgroundPosition: 'center bottom',
+          backgroundSize: 'auto 100%',
+          pointerEvents: 'none',
+        }}
+      />
+    ));
+  }
 
   return (
     <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
@@ -156,7 +192,26 @@ export default function ParallaxBackground({
         ))}
       </div>
 
-      {/* ── Atmospheric particles canvas (between mid and front layers) ── */}
+      {/* ── SVG Silhouette Layers — outgoing era fades out ───────────── */}
+      {prevBg && (
+        <div key={`layers-out-${fadeOutKey}`} className="absolute inset-0 era-fade-out" style={{ pointerEvents: 'none' }}>
+          {renderEraLayers(prevBg, 1)}
+        </div>
+      )}
+
+      {/* ── SVG Silhouette Layers — current era fades in ─────────────── */}
+      <div
+        key={`layers-in-${currentKey}`}
+        className="absolute inset-0"
+        style={{
+          pointerEvents: 'none',
+          animation: currentKey > 0 ? 'eraFadeIn 1.2s ease-in-out forwards' : 'none',
+        }}
+      >
+        {renderEraLayers(bg, 1)}
+      </div>
+
+      {/* ── Atmospheric particles canvas (between silhouettes and front) ── */}
       {particlesEnabled && (
         <AtmosphericParticles
           config={bg.particles}

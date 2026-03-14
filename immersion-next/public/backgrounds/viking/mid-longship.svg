@@ -1,0 +1,45 @@
+<svg viewBox="0 0 1920 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>
+  <!-- Longship 1 -->
+  <g transform="translate(200,210)" opacity="0.85">
+    <path d="M0,40 Q80,-20 220,0 Q300,10 340,40 Q220,55 0,40Z" fill="#061525"/>
+    <line x1="170" y1="40" x2="170" y2="-60" stroke="#061525" stroke-width="6"/>
+    <polygon points="110,-60 230,-60 170,-110" fill="#061525"/>
+    <path d="M150,-60 Q170,-90 190,-60" fill="none" stroke="#061525" stroke-width="3"/>
+    <!-- Dragon head -->
+    <path d="M340,30 Q370,10 380,25 Q370,35 355,38Z" fill="#061525"/>
+    <!-- Oars -->
+    <line x1="60" y1="42" x2="40" y2="70" stroke="#061525" stroke-width="3" opacity="0.6"/>
+    <line x1="100" y1="44" x2="80" y2="72" stroke="#061525" stroke-width="3" opacity="0.6"/>
+    <line x1="200" y1="44" x2="180" y2="72" stroke="#061525" stroke-width="3" opacity="0.6"/>
+    <line x1="260" y1="43" x2="240" y2="71" stroke="#061525" stroke-width="3" opacity="0.6"/>
+  </g>
+  <!-- Longship 2 (distant, smaller) -->
+  <g transform="translate(1100,230) scale(0.55)" opacity="0.5">
+    <path d="M0,40 Q80,-20 220,0 Q300,10 340,40 Q220,55 0,40Z" fill="#061525"/>
+    <line x1="170" y1="40" x2="170" y2="-60" stroke="#061525" stroke-width="6"/>
+    <polygon points="110,-60 230,-60 170,-110" fill="#061525"/>
+    <path d="M340,30 Q370,10 380,25 Q370,35 355,38Z" fill="#061525"/>
+  </g>
+  <!-- Pine trees on shore -->
+  <g opacity="0.75">
+    <polygon points="1450,300 1465,220 1480,300" fill="#061525"/>
+    <polygon points="1455,255 1465,200 1475,255" fill="#061525"/>
+    <polygon points="1510,300 1525,225 1540,300" fill="#061525"/>
+    <polygon points="1515,260 1525,205 1535,260" fill="#061525"/>
+    <polygon points="1570,300 1582,240 1594,300" fill="#061525"/>
+    <polygon points="1640,300 1655,215 1670,300" fill="#061525"/>
+    <polygon points="1645,255 1655,195 1665,255" fill="#061525"/>
+    <polygon points="1700,300 1712,235 1724,300" fill="#061525"/>
+    <polygon points="1750,300 1765,220 1780,300" fill="#061525"/>
+    <polygon points="1800,300 1815,230 1830,300" fill="#061525"/>
+    <polygon points="1860,300 1875,245 1890,300" fill="#061525"/>
+    <polygon points="1900,300 1912,255 1924,300" fill="#061525"/>
+  </g>
+  <rect width="1920" height="300" fill="url(#fade)"/>
+</svg>

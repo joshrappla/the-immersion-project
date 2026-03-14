@@ -1,0 +1,26 @@
+<svg viewBox="0 0 1920 160" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <!-- Ground level with cobblestones suggestion -->
+  <rect x="0" y="115" width="1920" height="45" fill="#0d1520" opacity="0.9"/>
+  <!-- Cobble rows -->
+  <g fill="#0a1018" opacity="0.5">
+    <rect x="0" y="120" width="48" height="12"/><rect x="55" y="120" width="44" height="12"/><rect x="106" y="120" width="50" height="12"/>
+    <rect x="163" y="120" width="46" height="12"/><rect x="25" y="134" width="52" height="12"/><rect x="84" y="134" width="48" height="12"/>
+  </g>
+  <!-- Gear silhouettes -->
+  <g fill="#0d1520" opacity="0.75">
+    <!-- Gear 1 -->
+    <circle cx="180" cy="105" r="38"/>
+    <circle cx="180" cy="105" r="22" fill="#111827"/>
+    <rect x="172" y="62" width="16" height="18"/><rect x="172" y="130" width="16" height="18"/>
+    <rect x="137" y="97" width="18" height="16"/><rect x="205" y="97" width="18" height="16"/>
+    <!-- Gear 2 -->
+    <circle cx="1740" cy="100" r="45"/>
+    <circle cx="1740" cy="100" r="28" fill="#111827"/>
+    <rect x="731" y="50" width="18" height="20" transform="translate(1002,0)"/><rect x="731" y="130" width="18" height="20" transform="translate(1002,0)"/>
+    <rect x="691" y="92" width="20" height="18" transform="translate(1002,0)"/><rect x="771" y="92" width="20" height="18" transform="translate(1002,0)"/>
+  </g>
+  <!-- Steam wisps -->
+  <ellipse cx="320" cy="90" rx="100" ry="32" fill="#1f2937" opacity="0.25"/>
+  <ellipse cx="800" cy="80" rx="130" ry="38" fill="#1f2937" opacity="0.2"/>
+  <ellipse cx="1300" cy="88" rx="110" ry="30" fill="#1f2937" opacity="0.22"/>
+</svg>

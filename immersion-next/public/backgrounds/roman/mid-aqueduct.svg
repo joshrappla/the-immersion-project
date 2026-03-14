@@ -1,0 +1,40 @@
+<svg viewBox="0 0 1920 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+  <!-- Aqueduct arches spanning the scene -->
+  <!-- Water channel top -->
+  <rect x="0" y="60" width="1920" height="22" fill="#130606" opacity="0.85"/>
+  <!-- Piers with double arches -->
+  <g fill="#130606" opacity="0.9">
+    <!-- Lower tier arches -->
+    <rect x="0" y="82" width="40" height="198"/>
+    <path d="M40,130 Q100,90 160,130 L160,82 L40,82Z"/>
+    <rect x="160" y="82" width="40" height="198"/>
+    <path d="M200,130 Q260,90 320,130 L320,82 L200,82Z"/>
+    <rect x="320" y="82" width="40" height="198"/>
+    <path d="M360,130 Q420,90 480,130 L480,82 L360,82Z"/>
+    <rect x="480" y="82" width="40" height="198"/>
+    <path d="M520,130 Q580,90 640,130 L640,82 L520,82Z"/>
+    <rect x="640" y="82" width="40" height="198"/>
+    <path d="M680,130 Q740,90 800,130 L800,82 L680,82Z"/>
+    <rect x="800" y="82" width="40" height="198"/>
+    <path d="M840,130 Q900,90 960,130 L960,82 L840,82Z"/>
+    <rect x="960" y="82" width="40" height="198"/>
+    <path d="M1000,130 Q1060,90 1120,130 L1120,82 L1000,82Z"/>
+    <rect x="1120" y="82" width="40" height="198"/>
+    <path d="M1160,130 Q1220,90 1280,130 L1280,82 L1160,82Z"/>
+    <rect x="1280" y="82" width="40" height="198"/>
+    <path d="M1320,130 Q1380,90 1440,130 L1440,82 L1320,82Z"/>
+    <rect x="1440" y="82" width="40" height="198"/>
+    <path d="M1480,130 Q1540,90 1600,130 L1600,82 L1480,82Z"/>
+    <rect x="1600" y="82" width="40" height="198"/>
+    <path d="M1640,130 Q1700,90 1760,130 L1760,82 L1640,82Z"/>
+    <rect x="1760" y="82" width="40" height="198"/>
+    <path d="M1800,130 Q1860,90 1920,130 L1920,82 L1800,82Z"/>
+  </g>
+  <rect width="1920" height="280" fill="url(#fade)"/>
+</svg>

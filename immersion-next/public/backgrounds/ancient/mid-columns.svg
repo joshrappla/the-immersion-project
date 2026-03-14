@@ -1,0 +1,43 @@
+<svg viewBox="0 0 1920 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.65"/>
+    </linearGradient>
+  </defs>
+  <!-- Temple platform -->
+  <rect x="200" y="230" width="600" height="50" fill="#2a1403" opacity="0.85"/>
+  <rect x="210" y="215" width="580" height="20" fill="#2a1403" opacity="0.8"/>
+  <!-- Temple columns -->
+  <g fill="#2a1403" opacity="0.88">
+    <rect x="240" y="100" width="28" height="115"/>
+    <rect x="310" y="100" width="28" height="115"/>
+    <rect x="380" y="100" width="28" height="115"/>
+    <rect x="450" y="100" width="28" height="115"/>
+    <rect x="520" y="100" width="28" height="115"/>
+    <rect x="590" y="100" width="28" height="115"/>
+    <rect x="660" y="100" width="28" height="115"/>
+    <rect x="730" y="100" width="28" height="115"/>
+  </g>
+  <!-- Temple pediment -->
+  <polygon points="220,100 500,30 780,100" fill="#2a1403" opacity="0.8"/>
+  <!-- Obelisk left -->
+  <polygon points="90,280 103,80 116,280" fill="#2a1403" opacity="0.75"/>
+  <polygon points="99,82 103,60 107,82" fill="#3d2005" opacity="0.75"/>
+  <!-- Obelisk right -->
+  <polygon points="1760,280 1773,90 1786,280" fill="#2a1403" opacity="0.65"/>
+  <polygon points="1769,92 1773,70 1777,92" fill="#3d2005" opacity="0.65"/>
+  <!-- Second temple (right, partial) -->
+  <rect x="1100" y="240" width="450" height="40" fill="#2a1403" opacity="0.7"/>
+  <g fill="#2a1403" opacity="0.7">
+    <rect x="1130" y="120" width="24" height="122"/>
+    <rect x="1190" y="120" width="24" height="122"/>
+    <rect x="1250" y="120" width="24" height="122"/>
+    <rect x="1310" y="120" width="24" height="122"/>
+    <rect x="1370" y="120" width="24" height="122"/>
+    <rect x="1430" y="120" width="24" height="122"/>
+    <rect x="1490" y="120" width="24" height="122"/>
+  </g>
+  <polygon points="1110,120 1315,50 1520,120" fill="#2a1403" opacity="0.65"/>
+  <rect width="1920" height="280" fill="url(#fade)"/>
+</svg>
