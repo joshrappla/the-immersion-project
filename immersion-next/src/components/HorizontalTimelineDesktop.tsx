@@ -6,6 +6,7 @@ import { COUNTRY_OPTIONS, getCountryName } from '@/lib/countries';
 import ParallaxBackground from '@/components/ParallaxBackground';
 import EraIndicator from '@/components/EraIndicator';
 import { useTimelineScroll } from '@/hooks/useTimelineScroll';
+import CountryZoomView from '@/components/CountryZoomView';
 
 interface MediaItem {
   mediaId: string;
@@ -54,6 +55,7 @@ export default function HorizontalTimelineDesktop() {
   const [musicOn, setMusicOn] = useState(false);
   const [particlesEnabled, setParticlesEnabled] = useState(true);
   const [countryFilter, setCountryFilter] = useState<string[]>([]);
+  const [zoomCountry, setZoomCountry] = useState<string | null>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const zoomLevelRef = useRef(2);
   const minYearRef = useRef(0);
@@ -403,6 +405,20 @@ export default function HorizontalTimelineDesktop() {
 
   return (
     <div className="relative min-h-screen bg-black overflow-hidden">
+      {/* Country Zoom View — full-screen overlay */}
+      {zoomCountry && mounted && (
+        <CountryZoomView
+          countryCode={zoomCountry}
+          allMediaItems={mediaItems}
+          particlesEnabled={particlesEnabled}
+          onClose={() => setZoomCountry(null)}
+          onCountrySwitch={(code) => {
+            setZoomCountry(code);
+            setCountryFilter([code]);
+          }}
+        />
+      )}
+
       {/* Parallax Era Background */}
       {mounted && (
         <ParallaxBackground
@@ -472,14 +488,28 @@ export default function HorizontalTimelineDesktop() {
 
           <div className="flex items-center gap-1 flex-wrap">
             {countryFilter.map(code => (
-              <span key={code} className="flex items-center gap-1 px-2 py-1 bg-teal-900/60 text-teal-300 rounded-full text-xs border border-teal-700">
+              <span key={code} className="flex items-center gap-1 pl-2 pr-1 py-1 bg-teal-900/60 text-teal-300 rounded-full text-xs border border-teal-700">
                 {getCountryName(code)}
-                <button onClick={() => setCountryFilter(prev => prev.filter(c => c !== code))} className="hover:text-white">✕</button>
+                <button
+                  onClick={() => setZoomCountry(code)}
+                  title="Zoom into country"
+                  className="hover:text-white px-1"
+                >🔍</button>
+                <button onClick={() => setCountryFilter(prev => prev.filter(c => c !== code))} className="hover:text-white pr-1">✕</button>
               </span>
             ))}
             <select
               value=""
-              onChange={(e) => { if (e.target.value) setCountryFilter(prev => [...prev, e.target.value]); }}
+              onChange={(e) => {
+                const code = e.target.value;
+                if (!code) return;
+                setCountryFilter(prev => {
+                  const next = [...prev, code];
+                  // Auto-zoom when adding first country
+                  if (prev.length === 0) setZoomCountry(code);
+                  return next;
+                });
+              }}
               className="bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 text-sm hover:bg-gray-700 transition"
             >
               <option value="">{countryFilter.length ? '+ Country' : 'Country…'}</option>

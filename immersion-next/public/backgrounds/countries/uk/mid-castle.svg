@@ -1,0 +1,48 @@
+<svg viewBox="0 0 1920 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+  <!-- Windsor-style castle on slight hill -->
+  <ellipse cx="960" cy="310" rx="800" ry="80" fill="#060e07" opacity="0.5"/>
+  <g fill="#060e07" opacity="0.9" transform="translate(400,80)">
+    <!-- Round tower (Round Tower) -->
+    <circle cx="520" cy="130" r="70"/>
+    <circle cx="520" cy="130" r="60" fill="#040a05"/><!-- hollow -->
+    <circle cx="520" cy="130" r="68"/>
+    <!-- Tower battlements (top ring) -->
+    <g fill="#060e07">
+      <rect x="454" y="62" width="16" height="14"/><rect x="478" y="62" width="16" height="14"/>
+      <rect x="502" y="62" width="16" height="14"/><rect x="526" y="62" width="16" height="14"/>
+      <rect x="550" y="62" width="16" height="14"/><rect x="574" y="62" width="16" height="14"/>
+    </g>
+    <!-- Flagpole -->
+    <rect x="518" y="30" width="4" height="35"/>
+    <!-- Lower ward walls -->
+    <rect x="0" y="170" width="420" height="60"/>
+    <rect x="600" y="170" width="420" height="60"/>
+    <!-- Merlons on walls -->
+    <g fill="#060e07">
+      <rect x="5" y="155" width="22" height="18"/><rect x="32" y="155" width="22" height="18"/>
+      <rect x="59" y="155" width="22" height="18"/><rect x="86" y="155" width="22" height="18"/>
+      <rect x="113" y="155" width="22" height="18"/>
+    </g>
+    <!-- Corner towers -->
+    <rect x="-25" y="120" width="55" height="115"/>
+    <rect x="990" y="120" width="55" height="115"/>
+    <!-- Tower battlements -->
+    <rect x="-30" y="105" width="16" height="18"/><rect x="-10" y="105" width="16" height="18"/>
+    <rect x="10" y="105" width="16" height="18"/>
+    <!-- St George's Chapel (left wing) -->
+    <rect x="30" y="140" width="200" height="90"/>
+    <polygon points="25,140 130,80 235,140"/>
+    <rect x="90" y="95" width="16" height="50"/><!-- window tracery -->
+    <rect x="120" y="95" width="16" height="50"/>
+    <!-- Gateway -->
+    <rect x="390" y="170" width="80" height="60"/>
+    <path d="M390,195 Q430,170 470,195Z" fill="#040a05"/>
+  </g>
+  <rect width="1920" height="300" fill="url(#fade)"/>
+</svg>

@@ -1,0 +1,50 @@
+<svg viewBox="0 0 1920 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+  <!-- Stave church (center) — iconic Norwegian architecture -->
+  <g fill="#0a1a28" opacity="0.9" transform="translate(780,60)">
+    <!-- Base nave -->
+    <rect x="40" y="150" width="280" height="100"/>
+    <polygon points="30,150 180,80 330,150"/>
+    <!-- Cross-gables -->
+    <polygon points="80,150 180,100 280,150" fill="#08141e" opacity="0.5"/>
+    <!-- Dragon head ridgepole tips -->
+    <path d="M30,150 Q15,140 5,145 Q12,150 22,152Z" fill="#0a1a28"/>
+    <path d="M330,150 Q345,140 355,145 Q348,150 338,152Z" fill="#0a1a28"/>
+    <!-- Tower / steeple section -->
+    <rect x="130" y="60" width="100" height="95"/>
+    <polygon points="118,60 180,10 242,60"/>
+    <polygon points="125,60 180,20 235,60" fill="#08141e" opacity="0.4"/>
+    <!-- Steeple spire -->
+    <polygon points="164,10 180,-30 196,10"/>
+    <!-- Cross at top -->
+    <rect x="177" y="-42" width="6" height="20"/>
+    <rect x="172" y="-34" width="16" height="5"/>
+  </g>
+  <!-- Red wooden cottages (left) -->
+  <g fill="#0a1a28" opacity="0.78">
+    <rect x="120" y="180" width="130" height="100"/>
+    <polygon points="110,180 185,130 250,180"/>
+    <rect x="200" y="170" width="90" height="110"/>
+    <polygon points="190,170 245,128 300,170"/>
+  </g>
+  <!-- Red cottages (right) -->
+  <g fill="#0a1a28" opacity="0.72">
+    <rect x="1520" y="185" width="120" height="95"/>
+    <polygon points="1510,185 1580,136 1650,185"/>
+    <rect x="1655" y="178" width="105" height="102"/>
+    <polygon points="1645,178 1707,128 1770,178"/>
+  </g>
+  <!-- Pine trees flanking -->
+  <g fill="#060e14" opacity="0.75">
+    <polygon points="0,280 22,185 44,280"/><polygon points="5,240 22,175 39,240"/>
+    <polygon points="55,280 75,190 95,280"/><polygon points="60,245 75,182 90,245"/>
+    <polygon points="1825,280 1847,188 1869,280"/><polygon points="1830,244 1847,180 1864,244"/>
+    <polygon points="1880,280 1900,192 1920,260 1920,280"/>
+  </g>
+  <rect width="1920" height="280" fill="url(#fade)"/>
+</svg>

@@ -1,0 +1,33 @@
+<svg viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.7"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a0a10" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#1a0a10" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- Sky gradient suggestion -->
+  <rect width="1920" height="400" fill="url(#sky)"/>
+  <!-- Distant smaller mountain range -->
+  <polygon points="0,400 200,250 400,300 600,240 800,280 1000,230 1200,270 1400,240 1600,280 1800,260 1920,290 1920,400" fill="#1a0a10" opacity="0.45"/>
+  <!-- Mt. Fuji — iconic symmetrical cone, center-stage -->
+  <polygon points="560,400 960,60 1360,400" fill="#1a0a10" opacity="0.92"/>
+  <!-- Snow cap -->
+  <polygon points="870,160 960,60 1050,160 1010,170 970,145 930,170 890,165" fill="#c8dce8" opacity="0.55"/>
+  <!-- Fuji shoulder lines (subtle ridges) -->
+  <polygon points="730,400 960,60 880,400" fill="#140810" opacity="0.25"/>
+  <polygon points="1040,400 960,60 1190,400" fill="#140810" opacity="0.25"/>
+  <!-- Lake Kawaguchiko reflection suggestion (flat ellipse at base) -->
+  <ellipse cx="960" cy="398" rx="320" ry="18" fill="#120a18" opacity="0.4"/>
+  <!-- Pine forest at foothills -->
+  <g fill="#0e0610" opacity="0.7">
+    <polygon points="0,400 25,340 50,400"/><polygon points="40,400 65,345 90,400"/>
+    <polygon points="80,400 105,338 130,400"/><polygon points="120,400 148,342 176,400"/>
+    <polygon points="1744,400 1770,340 1796,400"/><polygon points="1790,400 1815,344 1840,400"/>
+    <polygon points="1835,400 1862,338 1889,400"/><polygon points="1880,400 1905,342 1920,380 1920,400"/>
+  </g>
+  <rect width="1920" height="400" fill="url(#fade)"/>
+</svg>

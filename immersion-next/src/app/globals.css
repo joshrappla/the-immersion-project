@@ -62,3 +62,28 @@ body {
 .era-indicator-enter {
   animation: eraIndicatorEnter 0.5s ease-out forwards;
 }
+
+/* ── Country Zoom View ───────────────────────────────────────────────────── */
+
+@keyframes countryPanelSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.country-info-panel {
+  animation: countryPanelSlideIn 0.45s 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Card line-clamp utility (Tailwind v4 may not expose it by default) */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

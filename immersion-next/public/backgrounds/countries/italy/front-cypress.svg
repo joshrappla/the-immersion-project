@@ -1,0 +1,26 @@
+<svg viewBox="0 0 1920 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <!-- Ground -->
+  <path d="M0,140 Q240,125 480,138 Q720,150 960,132 Q1200,115 1440,135 Q1680,152 1920,138 L1920,200 L0,200Z" fill="#150805" opacity="0.88"/>
+  <!-- Cypress tree row flanking a road -->
+  <g fill="#150805" opacity="0.88">
+    <!-- Left row -->
+    <ellipse cx="80" cy="105" rx="13" ry="62"/>
+    <ellipse cx="145" cy="108" rx="12" ry="58"/>
+    <ellipse cx="210" cy="112" rx="11" ry="54"/>
+    <ellipse cx="270" cy="116" rx="11" ry="50"/>
+    <ellipse cx="328" cy="120" rx="10" ry="46"/>
+    <!-- Right row -->
+    <ellipse cx="1840" cy="105" rx="13" ry="62"/>
+    <ellipse cx="1775" cy="108" rx="12" ry="58"/>
+    <ellipse cx="1710" cy="112" rx="11" ry="54"/>
+    <ellipse cx="1650" cy="116" rx="11" ry="50"/>
+    <ellipse cx="1592" cy="120" rx="10" ry="46"/>
+    <!-- Center road (path) -->
+    <rect x="890" y="135" width="140" height="65"/>
+    <!-- Olive trees (rounded) -->
+    <circle cx="550" cy="132" r="28"/><circle cx="565" cy="118" r="22"/>
+    <rect x="556" y="140" width="10" height="30"/>
+    <circle cx="1380" cy="130" r="26"/><circle cx="1395" cy="116" r="20"/>
+    <rect x="1386" y="138" width="10" height="30"/>
+  </g>
+</svg>

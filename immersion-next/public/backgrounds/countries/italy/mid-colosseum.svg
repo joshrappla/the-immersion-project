@@ -1,0 +1,41 @@
+<svg viewBox="0 0 1920 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+  <!-- Colosseum silhouette (center) -->
+  <g transform="translate(480,40)" opacity="0.9">
+    <!-- Elliptical outer wall -->
+    <path d="M0,180 Q0,20 480,0 Q960,20 960,180 L920,240 Q480,280 40,240Z" fill="#1c0a06"/>
+    <!-- Arch openings row 1 -->
+    <g fill="#0e0503" opacity="0.85">
+      <path d="M60,140 Q85,110 110,140 L110,180 L60,180Z"/>
+      <path d="M130,130 Q155,100 180,130 L180,175 L130,175Z"/>
+      <path d="M200,120 Q225,90 250,120 L250,168 L200,168Z"/>
+      <path d="M270,115 Q295,85 320,115 L320,165 L270,165Z"/>
+      <path d="M340,112 Q365,82 390,112 L390,162 L340,162Z"/>
+      <path d="M410,112 Q435,82 460,112 L460,162 L410,162Z"/>
+      <path d="M480,113 Q505,83 530,113 L530,163 L480,163Z"/>
+      <path d="M550,115 Q575,85 600,115 L600,165 L550,165Z"/>
+      <path d="M620,118 Q645,88 670,118 L670,168 L620,168Z"/>
+      <path d="M690,122 Q715,92 740,122 L740,172 L690,172Z"/>
+      <path d="M760,128 Q785,98 810,128 L810,176 L760,176Z"/>
+      <path d="M830,136 Q855,106 880,136 L880,182 L830,182Z"/>
+    </g>
+    <!-- Top partial wall with damage -->
+    <polygon points="0,0 0,30 960,50 960,30" fill="#1c0a06" opacity="0.6"/>
+  </g>
+  <!-- Pantheon dome (right) -->
+  <g fill="#1c0a06" opacity="0.65" transform="translate(1480,120)">
+    <path d="M0,120 Q110,-30 220,120Z"/>
+    <rect x="20" y="118" width="180" height="60"/>
+    <!-- Portico columns -->
+    <rect x="35" y="90" width="12" height="30"/><rect x="60" y="90" width="12" height="30"/>
+    <rect x="85" y="90" width="12" height="30"/><rect x="110" y="90" width="12" height="30"/>
+    <rect x="135" y="90" width="12" height="30"/>
+    <rect x="25" y="80" width="170" height="12"/><!-- entablature -->
+  </g>
+  <rect width="1920" height="300" fill="url(#fade)"/>
+</svg>

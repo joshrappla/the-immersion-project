@@ -1,0 +1,19 @@
+<svg viewBox="0 0 1920 160" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <!-- Layered fog / mist wisps -->
+  <ellipse cx="200" cy="90" rx="350" ry="55" fill="#1a2e1a" opacity="0.2"/>
+  <ellipse cx="700" cy="75" rx="420" ry="60" fill="#1a2e1a" opacity="0.18"/>
+  <ellipse cx="1200" cy="88" rx="400" ry="52" fill="#1a2e1a" opacity="0.2"/>
+  <ellipse cx="1700" cy="72" rx="350" ry="55" fill="#1a2e1a" opacity="0.17"/>
+  <ellipse cx="960" cy="110" rx="600" ry="45" fill="#1a2e1a" opacity="0.15"/>
+  <!-- Denser ground mist -->
+  <path d="M0,120 Q320,100 640,118 Q960,136 1280,112 Q1600,90 1920,115 L1920,160 L0,160Z" fill="#060e07" opacity="0.75"/>
+  <!-- Hedge / low shrubbery -->
+  <g fill="#040a05" opacity="0.8">
+    <ellipse cx="150" cy="128" rx="80" ry="22"/>
+    <ellipse cx="450" cy="122" rx="100" ry="24"/>
+    <ellipse cx="800" cy="126" rx="90" ry="20"/>
+    <ellipse cx="1150" cy="120" rx="110" ry="23"/>
+    <ellipse cx="1500" cy="124" rx="95" ry="21"/>
+    <ellipse cx="1800" cy="128" rx="85" ry="22"/>
+  </g>
+</svg>

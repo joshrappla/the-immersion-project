@@ -1,0 +1,30 @@
+<svg viewBox="0 0 1920 260" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.65"/>
+    </linearGradient>
+  </defs>
+  <!-- Desert floor with low mesas and scrub -->
+  <path d="M0,180 Q240,160 480,175 Q720,190 960,165 Q1200,140 1440,170 Q1680,200 1920,178 L1920,260 L0,260Z" fill="#2a0e04" opacity="0.78"/>
+  <!-- Rocky outcrops / small buttes -->
+  <g fill="#1e0b03" opacity="0.82">
+    <path d="M80,180 L80,130 Q110,110 140,130 L140,180Z"/>
+    <rect x="75" y="120" width="70" height="12"/>
+    <path d="M400,178 L400,140 Q430,122 460,140 L460,178Z"/>
+    <rect x="395" y="130" width="70" height="12"/>
+    <path d="M900,168 L900,110 Q940,88 980,110 L980,168Z"/>
+    <rect x="895" y="98" width="90" height="14"/>
+    <path d="M1300,172 L1300,130 Q1340,112 1380,130 L1380,172Z"/>
+    <rect x="1295" y="120" width="90" height="13"/>
+    <path d="M1700,178 L1700,138 Q1730,120 1760,138 L1760,178Z"/>
+    <rect x="1695" y="128" width="70" height="12"/>
+  </g>
+  <!-- Tumbleweed circles -->
+  <g fill="none" stroke="#1e0b03" stroke-width="3" opacity="0.5">
+    <circle cx="250" cy="178" r="18"/><circle cx="255" cy="176" r="12"/>
+    <circle cx="1100" cy="170" r="22"/><circle cx="1106" cy="168" r="15"/>
+    <circle cx="1650" cy="180" r="16"/><circle cx="1654" cy="178" r="10"/>
+  </g>
+  <rect width="1920" height="260" fill="url(#fade)"/>
+</svg>
