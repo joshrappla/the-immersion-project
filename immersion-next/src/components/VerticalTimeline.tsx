@@ -38,6 +38,7 @@ export default function VerticalTimeline() {
   const [timelineScale, setTimelineScale] = useState(1);
   const [countryFilter, setCountryFilter] = useState<string[]>([]);
   const [musicOn, setMusicOn] = useState(false);
+  const [particlesEnabled, setParticlesEnabled] = useState(true);
   const pinchStartRef = useRef<{ distance: number; scale: number } | null>(null);
   const timelineContainerRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -66,6 +67,8 @@ export default function VerticalTimeline() {
   useEffect(() => {
     setMounted(true);
     fetchMediaItems();
+    const stored = localStorage.getItem('particlesEnabled');
+    if (stored !== null) setParticlesEnabled(stored !== 'false');
   }, []);
 
   // Background music — place your audio file at /public/music/background.mp3
@@ -79,6 +82,14 @@ export default function VerticalTimeline() {
       audioRef.current = null;
     };
   }, []);
+
+  const toggleParticles = () => {
+    setParticlesEnabled(prev => {
+      const next = !prev;
+      localStorage.setItem('particlesEnabled', String(next));
+      return next;
+    });
+  };
 
   const toggleMusic = () => {
     const audio = audioRef.current;
@@ -239,6 +250,7 @@ export default function VerticalTimeline() {
         scrollOffset={scrollOffset}
         currentEra={currentEra}
         mode="vertical"
+        particlesEnabled={particlesEnabled}
       />
 
       {/* Era Indicator (bottom-left floating badge) */}
@@ -347,6 +359,21 @@ export default function VerticalTimeline() {
                   </svg>
                 )}
                 <span className="font-semibold">{musicOn ? 'Music On' : 'Music Off'}</span>
+              </button>
+
+              {/* FX Toggle */}
+              <button
+                onClick={toggleParticles}
+                className={`flex items-center gap-3 w-full p-4 rounded-lg border transition ${
+                  particlesEnabled
+                    ? 'bg-teal-900/60 text-teal-300 border-teal-700 hover:bg-teal-900'
+                    : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700'
+                }`}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+                <span className="font-semibold">FX {particlesEnabled ? 'On' : 'Off'}</span>
               </button>
 
               {/* Filters */}

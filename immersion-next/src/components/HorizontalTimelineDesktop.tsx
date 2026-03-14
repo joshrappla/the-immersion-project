@@ -52,6 +52,7 @@ export default function HorizontalTimelineDesktop() {
   const [contributeTab, setContributeTab] = useState<'media' | 'feedback'>('media');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [musicOn, setMusicOn] = useState(false);
+  const [particlesEnabled, setParticlesEnabled] = useState(true);
   const [countryFilter, setCountryFilter] = useState<string[]>([]);
   const timelineRef = useRef<HTMLDivElement>(null);
   const zoomLevelRef = useRef(2);
@@ -80,9 +81,11 @@ export default function HorizontalTimelineDesktop() {
     'American Revolution': '#1e40af',
   };
 
-  // Set mounted state - fixes hydration error
+  // Set mounted state + read persisted preferences
   useEffect(() => {
     setMounted(true);
+    const saved = localStorage.getItem('timeline-particles-enabled');
+    if (saved !== null) setParticlesEnabled(saved !== 'false');
   }, []);
 
   // Background music — place your audio file at /public/music/background.mp3
@@ -406,6 +409,7 @@ export default function HorizontalTimelineDesktop() {
           scrollOffset={scrollOffset}
           currentEra={currentEra}
           mode="horizontal"
+          particlesEnabled={particlesEnabled}
         />
       )}
 
@@ -532,6 +536,26 @@ export default function HorizontalTimelineDesktop() {
             {musicOn ? 'Music On' : 'Music Off'}
           </button>
 
+          {/* Effects Toggle */}
+          <button
+            onClick={() => {
+              const next = !particlesEnabled;
+              setParticlesEnabled(next);
+              localStorage.setItem('timeline-particles-enabled', String(next));
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm transition ${
+              particlesEnabled
+                ? 'bg-teal-900/60 text-teal-300 border-teal-700 hover:bg-teal-900'
+                : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
+            }`}
+            title={particlesEnabled ? 'Disable particle effects' : 'Enable particle effects'}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
+            </svg>
+            {particlesEnabled ? 'FX On' : 'FX Off'}
+          </button>
+
           <button
             onClick={() => setShowContributeModal(true)}
             className="flex items-center gap-2 bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 text-sm hover:bg-gray-700 transition"
@@ -626,6 +650,25 @@ export default function HorizontalTimelineDesktop() {
                   </svg>
                 )}
                 <span className="font-semibold">{musicOn ? 'Music On' : 'Music Off'}</span>
+              </button>
+
+              {/* Effects Toggle */}
+              <button
+                onClick={() => {
+                  const next = !particlesEnabled;
+                  setParticlesEnabled(next);
+                  localStorage.setItem('timeline-particles-enabled', String(next));
+                }}
+                className={`flex items-center gap-3 w-full p-4 rounded-lg border transition ${
+                  particlesEnabled
+                    ? 'bg-teal-900/60 text-teal-300 border-teal-700 hover:bg-teal-900'
+                    : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700'
+                }`}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
+                </svg>
+                <span className="font-semibold">{particlesEnabled ? 'Effects On' : 'Effects Off'}</span>
               </button>
 
               {/* Contribute */}

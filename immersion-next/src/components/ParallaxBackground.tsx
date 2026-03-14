@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { getEraBackground } from '@/data/eraBackgrounds';
+import AtmosphericParticles from '@/components/AtmosphericParticles';
 
 interface ParallaxBackgroundProps {
   /** scrollLeft for horizontal, scrollY for vertical */
   scrollOffset: number;
   currentEra: string;
   mode?: 'horizontal' | 'vertical';
+  particlesEnabled?: boolean;
 }
 
 // Hardcoded layer shapes — stable positions (no Math.random on render)
@@ -42,6 +44,7 @@ export default function ParallaxBackground({
   scrollOffset,
   currentEra,
   mode = 'horizontal',
+  particlesEnabled = true,
 }: ParallaxBackgroundProps) {
   // Gradient layer state
   const [displayEra,  setDisplayEra]  = useState(currentEra);
@@ -152,6 +155,15 @@ export default function ParallaxBackground({
           />
         ))}
       </div>
+
+      {/* ── Atmospheric particles canvas (between mid and front layers) ── */}
+      {particlesEnabled && (
+        <AtmosphericParticles
+          config={bg.particles}
+          scrollOffset={scrollOffset}
+          mode={mode}
+        />
+      )}
 
       {/* ── Parallax Layer 3 — Front (star particles) ────────────────── */}
       <div className="parallax-layer" style={{ transform: t3 }}>
