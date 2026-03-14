@@ -1,0 +1,36 @@
+<svg viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>
+  <!-- Attica landscape / rocky hill -->
+  <ellipse cx="960" cy="450" rx="750" ry="200" fill="#0c1a2e" opacity="0.7"/>
+  <!-- Acropolis rock face -->
+  <path d="M480,400 Q560,310 680,295 Q780,280 960,275 Q1140,280 1240,295 Q1360,310 1440,400Z" fill="#0a1828" opacity="0.9"/>
+  <!-- Parthenon -->
+  <g fill="#0a1828" opacity="0.95" transform="translate(560,140)">
+    <!-- Platform (stylobate) -->
+    <rect x="0" y="200" width="800" height="30"/>
+    <rect x="-10" y="225" width="820" height="20"/>
+    <!-- Columns -->
+    <g fill="#0a1828">
+      <rect x="30" y="80" width="28" height="120"/><rect x="85" y="80" width="28" height="120"/>
+      <rect x="140" y="80" width="28" height="120"/><rect x="195" y="80" width="28" height="120"/>
+      <rect x="250" y="80" width="28" height="120"/><rect x="305" y="80" width="28" height="120"/>
+      <rect x="360" y="80" width="28" height="120"/><rect x="415" y="80" width="28" height="120"/>
+      <rect x="470" y="80" width="28" height="120"/><rect x="525" y="80" width="28" height="120"/>
+      <rect x="580" y="80" width="28" height="120"/><rect x="635" y="80" width="28" height="120"/>
+      <rect x="690" y="80" width="28" height="120"/><rect x="742" y="80" width="28" height="120"/>
+    </g>
+    <!-- Entablature -->
+    <rect x="0" y="60" width="800" height="22"/>
+    <!-- Pediment (gable) -->
+    <polygon points="-15,60 400,-30 815,60"/>
+  </g>
+  <!-- Distant hills -->
+  <path d="M0,380 Q200,340 400,360 Q600,380 800,350 L800,400 L0,400Z" fill="#070f1e" opacity="0.55"/>
+  <path d="M1120,350 Q1300,330 1500,355 Q1700,380 1920,360 L1920,400 L1120,400Z" fill="#070f1e" opacity="0.5"/>
+  <rect width="1920" height="400" fill="url(#fade)"/>
+</svg>

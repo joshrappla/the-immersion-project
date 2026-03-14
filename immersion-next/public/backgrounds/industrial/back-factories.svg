@@ -1,0 +1,34 @@
+<svg viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.75"/>
+    </linearGradient>
+  </defs>
+  <!-- Factory complex -->
+  <g fill="#111827" opacity="0.9">
+    <!-- Large factory buildings -->
+    <rect x="0" y="200" width="250" height="200"/><rect x="265" y="230" width="180" height="170"/>
+    <rect x="460" y="180" width="300" height="220"/><rect x="775" y="215" width="220" height="185"/>
+    <rect x="1010" y="190" width="260" height="210"/><rect x="1285" y="220" width="200" height="180"/>
+    <rect x="1500" y="195" width="280" height="205"/><rect x="1795" y="230" width="125" height="170"/>
+    <!-- Sawtooth rooflines (factory skylights) -->
+    <polygon points="460,180 490,155 520,180"/><polygon points="520,180 550,155 580,180"/>
+    <polygon points="580,180 610,155 640,180"/><polygon points="640,180 670,155 700,180"/>
+    <polygon points="700,180 730,155 760,180"/>
+    <polygon points="1010,190 1040,165 1070,190"/><polygon points="1070,190 1100,165 1130,190"/>
+    <polygon points="1130,190 1160,165 1190,190"/><polygon points="1190,190 1220,165 1250,190"/>
+    <!-- Chimneys / smokestacks -->
+    <rect x="50" y="80" width="30" height="125"/><rect x="110" y="60" width="25" height="145"/>
+    <rect x="310" y="90" width="28" height="145"/><rect x="520" y="50" width="32" height="135"/>
+    <rect x="600" y="70" width="26" height="115"/><rect x="820" y="85" width="30" height="135"/>
+    <rect x="890" y="65" width="28" height="150"/><rect x="1060" y="60" width="32" height="135"/>
+    <rect x="1140" y="80" width="26" height="115"/><rect x="1340" y="75" width="30" height="148"/>
+    <rect x="1560" y="55" width="34" height="145"/><rect x="1640" y="75" width="26" height="125"/>
+    <rect x="1840" y="85" width="28" height="148"/>
+    <!-- Chimney caps -->
+    <rect x="44" y="72" width="42" height="12"/><rect x="103" y="52" width="37" height="12"/>
+    <rect x="303" y="82" width="40" height="12"/><rect x="513" y="42" width="44" height="12"/>
+  </g>
+  <rect width="1920" height="400" fill="url(#fade)"/>
+</svg>

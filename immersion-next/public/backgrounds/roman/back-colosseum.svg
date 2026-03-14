@@ -1,0 +1,40 @@
+<svg viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.75"/>
+    </linearGradient>
+  </defs>
+  <!-- Rolling hills -->
+  <ellipse cx="400" cy="430" rx="550" ry="180" fill="#1a0808" opacity="0.6"/>
+  <ellipse cx="1500" cy="440" rx="600" ry="170" fill="#1a0808" opacity="0.55"/>
+  <!-- Colosseum -->
+  <g transform="translate(580,150)" opacity="0.92">
+    <!-- Elliptical base -->
+    <ellipse cx="370" cy="230" rx="370" ry="100" fill="#1a0808"/>
+    <!-- Outer wall -->
+    <path d="M0,160 Q0,0 370,0 Q740,0 740,160 L700,230 Q370,290 70,230Z" fill="#1a0808"/>
+    <!-- Arch rows -->
+    <g fill="#0a0404" opacity="0.8">
+      <!-- Bottom row arches -->
+      <path d="M60,160 Q80,130 100,160Z"/><path d="M110,155 Q130,125 150,155Z"/>
+      <path d="M160,148 Q180,118 200,148Z"/><path d="M210,143 Q230,113 250,143Z"/>
+      <path d="M260,140 Q280,110 300,140Z"/><path d="M310,138 Q330,108 350,138Z"/>
+      <path d="M360,137 Q380,107 400,137Z"/><path d="M410,138 Q430,108 450,138Z"/>
+      <path d="M460,140 Q480,110 500,140Z"/><path d="M510,143 Q530,113 550,143Z"/>
+      <path d="M560,148 Q580,118 600,148Z"/><path d="M610,153 Q630,123 650,153Z"/>
+      <path d="M660,158 Q680,128 700,158Z"/>
+    </g>
+  </g>
+  <!-- Temple on hill (right) -->
+  <g transform="translate(1400,200)" opacity="0.7">
+    <rect x="0" y="80" width="200" height="120" fill="#1a0808"/>
+    <g fill="#1a0808">
+      <rect x="20" y="20" width="18" height="62"/><rect x="55" y="20" width="18" height="62"/>
+      <rect x="90" y="20" width="18" height="62"/><rect x="125" y="20" width="18" height="62"/>
+      <rect x="160" y="20" width="18" height="62"/>
+    </g>
+    <polygon points="-10,20 100,-40 210,20" fill="#1a0808"/>
+  </g>
+  <rect width="1920" height="400" fill="url(#fade)"/>
+</svg>

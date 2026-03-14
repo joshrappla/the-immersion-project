@@ -1,0 +1,29 @@
+<svg viewBox="0 0 1920 160" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="aur1" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#00ffe0" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#00ffe0" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="aur2" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#6600ff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#6600ff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="aur3" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#00c3a0" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#00c3a0" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- Aurora curtain bands -->
+  <path d="M0,160 Q160,20 320,80 Q480,140 640,40 Q800,-10 960,60 Q1120,130 1280,50 Q1440,-5 1600,70 Q1760,145 1920,50 L1920,160Z" fill="url(#aur1)" opacity="0.9"/>
+  <path d="M0,160 Q200,50 400,110 Q600,165 800,80 Q1000,0 1200,90 Q1400,165 1600,95 Q1760,40 1920,100 L1920,160Z" fill="url(#aur2)" opacity="0.7"/>
+  <path d="M0,160 Q300,110 600,145 Q900,180 1200,120 Q1500,68 1920,140 L1920,160Z" fill="url(#aur3)" opacity="0.8"/>
+  <!-- Snow-covered ground -->
+  <path d="M0,130 Q240,118 480,128 Q720,138 960,122 Q1200,108 1440,125 Q1680,142 1920,128 L1920,160 L0,160Z" fill="#0a1a28" opacity="0.88"/>
+  <!-- Snow texture bumps -->
+  <g fill="#c8dce8" opacity="0.12">
+    <ellipse cx="200" cy="132" rx="120" ry="14"/>
+    <ellipse cx="700" cy="126" rx="140" ry="12"/>
+    <ellipse cx="1200" cy="124" rx="130" ry="12"/>
+    <ellipse cx="1700" cy="130" rx="110" ry="13"/>
+  </g>
+</svg>

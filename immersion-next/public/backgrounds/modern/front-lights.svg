@@ -1,0 +1,42 @@
+<svg viewBox="0 0 1920 160" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <!-- Street level -->
+  <rect x="0" y="120" width="1920" height="40" fill="#08061e" opacity="0.9"/>
+  <!-- Street lights -->
+  <g fill="#08061e" opacity="0.85">
+    <!-- Pole left -->
+    <rect x="150" y="50" width="6" height="72"/>
+    <rect x="156" y="50" width="30" height="5"/>
+    <ellipse cx="186" cy="52" rx="8" ry="5"/>
+    <!-- Pole mid-left -->
+    <rect x="480" y="55" width="6" height="67"/>
+    <rect x="452" y="55" width="34" height="5"/>
+    <ellipse cx="452" cy="57" rx="8" ry="5"/>
+    <!-- Pole center -->
+    <rect x="960" y="48" width="6" height="74"/>
+    <rect x="966" y="48" width="32" height="5"/>
+    <ellipse cx="998" cy="50" rx="8" ry="5"/>
+    <!-- Pole mid-right -->
+    <rect x="1440" y="55" width="6" height="67"/>
+    <rect x="1446" y="55" width="32" height="5"/>
+    <ellipse cx="1478" cy="57" rx="8" ry="5"/>
+    <!-- Pole right -->
+    <rect x="1770" y="50" width="6" height="72"/>
+    <rect x="1742" y="50" width="34" height="5"/>
+    <ellipse cx="1742" cy="52" rx="8" ry="5"/>
+  </g>
+  <!-- Light halos -->
+  <ellipse cx="186" cy="52" rx="40" ry="18" fill="#a78bfa" opacity="0.08"/>
+  <ellipse cx="452" cy="57" rx="38" ry="16" fill="#a78bfa" opacity="0.07"/>
+  <ellipse cx="998" cy="50" rx="42" ry="18" fill="#a78bfa" opacity="0.08"/>
+  <ellipse cx="1478" cy="57" rx="38" ry="16" fill="#a78bfa" opacity="0.07"/>
+  <ellipse cx="1742" cy="52" rx="40" ry="18" fill="#a78bfa" opacity="0.08"/>
+  <!-- Road markings -->
+  <g fill="#08061e" opacity="0.4">
+    <rect x="200" y="130" width="60" height="8"/>
+    <rect x="500" y="130" width="60" height="8"/>
+    <rect x="800" y="130" width="60" height="8"/>
+    <rect x="1100" y="130" width="60" height="8"/>
+    <rect x="1400" y="130" width="60" height="8"/>
+    <rect x="1700" y="130" width="60" height="8"/>
+  </g>
+</svg>

@@ -1,0 +1,35 @@
+<svg viewBox="0 0 1920 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+  <!-- Loggia / arcade -->
+  <rect x="0" y="200" width="1920" height="80" fill="#1c0a0e" opacity="0.85"/>
+  <rect x="0" y="50" width="1920" height="22" fill="#1c0a0e" opacity="0.7"/><!-- cornice -->
+  <!-- Arched colonnade -->
+  <g fill="#1c0a0e" opacity="0.88">
+    <!-- Piers -->
+    <rect x="0" y="72" width="45" height="128"/><path d="M45,140 Q105,80 165,140 L165,72 L45,72Z"/>
+    <rect x="165" y="72" width="45" height="128"/><path d="M210,140 Q270,80 330,140 L330,72 L210,72Z"/>
+    <rect x="330" y="72" width="45" height="128"/><path d="M375,140 Q435,80 495,140 L495,72 L375,72Z"/>
+    <rect x="495" y="72" width="45" height="128"/><path d="M540,140 Q600,80 660,140 L660,72 L540,72Z"/>
+    <rect x="660" y="72" width="45" height="128"/><path d="M705,140 Q765,80 825,140 L825,72 L705,72Z"/>
+    <rect x="825" y="72" width="45" height="128"/><path d="M870,140 Q930,80 990,140 L990,72 L870,72Z"/>
+    <rect x="990" y="72" width="45" height="128"/><path d="M1035,140 Q1095,80 1155,140 L1155,72 L1035,72Z"/>
+    <rect x="1155" y="72" width="45" height="128"/><path d="M1200,140 Q1260,80 1320,140 L1320,72 L1200,72Z"/>
+    <rect x="1320" y="72" width="45" height="128"/><path d="M1365,140 Q1425,80 1485,140 L1485,72 L1365,72Z"/>
+    <rect x="1485" y="72" width="45" height="128"/><path d="M1530,140 Q1590,80 1650,140 L1650,72 L1530,72Z"/>
+    <rect x="1650" y="72" width="45" height="128"/><path d="M1695,140 Q1755,80 1815,140 L1815,72 L1695,72Z"/>
+    <rect x="1815" y="72" width="45" height="128"/>
+    <!-- Column capitals (small rectangles) -->
+    <rect x="-5" y="64" width="55" height="10"/><rect x="160" y="64" width="55" height="10"/>
+    <rect x="325" y="64" width="55" height="10"/><rect x="490" y="64" width="55" height="10"/>
+    <rect x="655" y="64" width="55" height="10"/><rect x="820" y="64" width="55" height="10"/>
+    <rect x="985" y="64" width="55" height="10"/><rect x="1150" y="64" width="55" height="10"/>
+    <rect x="1315" y="64" width="55" height="10"/><rect x="1480" y="64" width="55" height="10"/>
+    <rect x="1645" y="64" width="55" height="10"/><rect x="1810" y="64" width="55" height="10"/>
+  </g>
+  <rect width="1920" height="280" fill="url(#fade)"/>
+</svg>

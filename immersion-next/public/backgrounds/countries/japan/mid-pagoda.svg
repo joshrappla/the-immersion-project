@@ -1,0 +1,66 @@
+<svg viewBox="0 0 1920 320" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.65"/>
+    </linearGradient>
+  </defs>
+  <!-- Five-story pagoda (center) -->
+  <g fill="#1a0a10" opacity="0.92" transform="translate(840,0)">
+    <!-- Base platform -->
+    <rect x="40" y="280" width="160" height="20"/>
+    <!-- Story 5 (bottom) -->
+    <rect x="55" y="245" width="130" height="40"/>
+    <polygon points="40,245 120,215 200,245"/><!-- eaves -->
+    <!-- Story 4 -->
+    <rect x="65" y="208" width="110" height="40"/>
+    <polygon points="52,208 120,180 188,208"/>
+    <!-- Story 3 -->
+    <rect x="73" y="172" width="94" height="40"/>
+    <polygon points="62,172 120,147 178,172"/>
+    <!-- Story 2 -->
+    <rect x="80" y="138" width="80" height="38"/>
+    <polygon points="70,138 120,115 170,138"/>
+    <!-- Story 1 (top) -->
+    <rect x="87" y="106" width="66" height="36"/>
+    <polygon points="78,106 120,85 162,106"/>
+    <!-- Spire -->
+    <rect x="116" y="60" width="8" height="30"/>
+    <polygon points="108,60 120,40 132,60"/>
+    <!-- Finial rings -->
+    <ellipse cx="120" cy="60" rx="10" ry="4"/>
+    <ellipse cx="120" cy="52" rx="7" ry="3"/>
+    <ellipse cx="120" cy="45" rx="5" ry="2"/>
+  </g>
+  <!-- Torii gate (left) -->
+  <g fill="#1a0a10" opacity="0.78" transform="translate(200,100)">
+    <!-- Cross beams -->
+    <rect x="0" y="50" width="200" height="14"/>
+    <rect x="10" y="68" width="180" height="10"/>
+    <!-- Pillars -->
+    <rect x="20" y="62" width="18" height="190"/>
+    <rect x="162" y="62" width="18" height="190"/>
+    <!-- Pillar bases -->
+    <rect x="12" y="238" width="34" height="12"/>
+    <rect x="154" y="238" width="34" height="12"/>
+  </g>
+  <!-- Torii gate (right, partial) -->
+  <g fill="#1a0a10" opacity="0.65" transform="translate(1440,130)">
+    <rect x="0" y="30" width="180" height="12"/>
+    <rect x="8" y="44" width="164" height="9"/>
+    <rect x="18" y="40" width="16" height="160"/>
+    <rect x="146" y="40" width="16" height="160"/>
+  </g>
+  <!-- Pine trees -->
+  <g fill="#0e0610" opacity="0.8">
+    <polygon points="100,320 118,250 136,320"/>
+    <polygon points="108,285 118,240 128,285"/>
+    <polygon points="350,320 370,245 390,320"/>
+    <polygon points="358,278 370,235 382,278"/>
+    <polygon points="1530,320 1550,248 1570,320"/>
+    <polygon points="1538,280 1550,238 1562,280"/>
+    <polygon points="1750,320 1768,252 1786,320"/>
+    <polygon points="1758,285 1768,242 1778,285"/>
+  </g>
+  <rect width="1920" height="320" fill="url(#fade)"/>
+</svg>

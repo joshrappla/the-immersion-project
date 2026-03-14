@@ -1,0 +1,52 @@
+<svg viewBox="0 0 1920 220" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <!-- Cherry blossom tree branches framing the view -->
+  <!-- Left tree -->
+  <g fill="#1a0a10" opacity="0.88">
+    <!-- Trunk -->
+    <path d="M0,220 Q20,180 30,140 Q40,100 25,60" stroke="#1a0a10" stroke-width="18" fill="none"/>
+    <!-- Main branches -->
+    <path d="M25,60 Q0,30 -10,10" stroke="#1a0a10" stroke-width="10" fill="none"/>
+    <path d="M25,80 Q60,45 80,20" stroke="#1a0a10" stroke-width="8" fill="none"/>
+    <path d="M28,100 Q70,75 100,55" stroke="#1a0a10" stroke-width="7" fill="none"/>
+    <path d="M30,120 Q80,100 120,90" stroke="#1a0a10" stroke-width="6" fill="none"/>
+    <!-- Sub-branches -->
+    <path d="M60,45 Q50,20 45,5" stroke="#1a0a10" stroke-width="5" fill="none"/>
+    <path d="M80,20 Q95,5 105,-5" stroke="#1a0a10" stroke-width="4" fill="none"/>
+    <path d="M100,55 Q115,35 125,20" stroke="#1a0a10" stroke-width="4" fill="none"/>
+    <path d="M120,90 Q140,70 155,55" stroke="#1a0a10" stroke-width="3" fill="none"/>
+  </g>
+  <!-- Blossom clusters on left tree -->
+  <g opacity="0.35" fill="#c24b6a">
+    <circle cx="0" cy="10" r="28"/><circle cx="30" cy="-5" r="22"/>
+    <circle cx="80" cy="18" r="25"/><circle cx="110" cy="5" r="20"/>
+    <circle cx="60" cy="42" r="18"/><circle cx="105" cy="52" r="16"/>
+    <circle cx="128" cy="18" r="15"/><circle cx="155" cy="53" r="14"/>
+  </g>
+  <!-- Right tree -->
+  <g fill="#1a0a10" opacity="0.88">
+    <path d="M1920,220 Q1900,180 1892,140 Q1882,100 1896,60" stroke="#1a0a10" stroke-width="18" fill="none"/>
+    <path d="M1896,60 Q1920,30 1928,10" stroke="#1a0a10" stroke-width="10" fill="none"/>
+    <path d="M1896,80 Q1860,45 1840,20" stroke="#1a0a10" stroke-width="8" fill="none"/>
+    <path d="M1894,100 Q1852,75 1824,55" stroke="#1a0a10" stroke-width="7" fill="none"/>
+    <path d="M1892,120 Q1844,100 1804,90" stroke="#1a0a10" stroke-width="6" fill="none"/>
+    <path d="M1862,45 Q1872,20 1878,5" stroke="#1a0a10" stroke-width="5" fill="none"/>
+    <path d="M1840,20 Q1826,5 1818,-5" stroke="#1a0a10" stroke-width="4" fill="none"/>
+    <path d="M1824,55 Q1808,35 1798,20" stroke="#1a0a10" stroke-width="4" fill="none"/>
+    <path d="M1804,90 Q1784,70 1770,55" stroke="#1a0a10" stroke-width="3" fill="none"/>
+  </g>
+  <!-- Blossom clusters on right tree -->
+  <g opacity="0.35" fill="#c24b6a">
+    <circle cx="1922" cy="10" r="28"/><circle cx="1892" cy="-5" r="22"/>
+    <circle cx="1842" cy="18" r="25"/><circle cx="1812" cy="5" r="20"/>
+    <circle cx="1862" cy="42" r="18"/><circle cx="1818" cy="52" r="16"/>
+    <circle cx="1795" cy="18" r="15"/><circle cx="1768" cy="53" r="14"/>
+  </g>
+  <!-- Ground path -->
+  <path d="M0,185 Q480,165 960,175 Q1440,185 1920,168 L1920,220 L0,220Z" fill="#1a0a10" opacity="0.6"/>
+  <!-- Small bridge suggestion -->
+  <g fill="#1a0a10" opacity="0.7" transform="translate(840,160)">
+    <path d="M0,40 Q120,10 240,40" fill="none" stroke="#1a0a10" stroke-width="8"/>
+    <rect x="0" y="38" width="15" height="30"/>
+    <rect x="225" y="38" width="15" height="30"/>
+  </g>
+</svg>

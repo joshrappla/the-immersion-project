@@ -1,0 +1,46 @@
+<svg viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.75"/>
+    </linearGradient>
+  </defs>
+  <!-- Distant coastline hills -->
+  <ellipse cx="500" cy="430" rx="600" ry="130" fill="#1a0e04" opacity="0.55"/>
+  <ellipse cx="1400" cy="440" rx="700" ry="120" fill="#1a0e04" opacity="0.5"/>
+  <!-- Galleon ship 1 -->
+  <g transform="translate(200,210)" opacity="0.88">
+    <!-- Hull -->
+    <path d="M0,80 Q10,110 80,120 Q200,130 320,115 Q380,108 390,80 Q300,60 200,55 Q80,58 0,80Z" fill="#1a0e04"/>
+    <!-- Stern castle -->
+    <rect x="320" y="30" width="80" height="90" fill="#1a0e04"/>
+    <!-- Foremast -->
+    <line x1="100" y1="80" x2="95" y2="-100" stroke="#1a0e04" stroke-width="7"/>
+    <rect x="62" y="-100" width="66" height="50" fill="#1a0e04" opacity="0.7"/><!-- sail -->
+    <rect x="68" y="-50" width="54" height="40" fill="#1a0e04" opacity="0.6"/>
+    <!-- Mainmast -->
+    <line x1="220" y1="70" x2="215" y2="-130" stroke="#1a0e04" stroke-width="8"/>
+    <rect x="170" y="-130" width="90" height="60" fill="#1a0e04" opacity="0.75"/>
+    <rect x="178" y="-68" width="74" height="50" fill="#1a0e04" opacity="0.65"/>
+    <rect x="185" y="-15" width="60" height="40" fill="#1a0e04" opacity="0.55"/>
+    <!-- Mizzenmast -->
+    <line x1="340" y1="50" x2="338" y2="-60" stroke="#1a0e04" stroke-width="6"/>
+    <rect x="308" y="-60" width="62" height="45" fill="#1a0e04" opacity="0.65"/>
+  </g>
+  <!-- Galleon ship 2 (distant, smaller) -->
+  <g transform="translate(1100,240) scale(0.5)" opacity="0.55">
+    <path d="M0,80 Q10,110 80,120 Q200,130 320,115 Q380,108 390,80 Q300,60 200,55 Q80,58 0,80Z" fill="#1a0e04"/>
+    <rect x="320" y="30" width="80" height="90" fill="#1a0e04"/>
+    <line x1="100" y1="80" x2="95" y2="-100" stroke="#1a0e04" stroke-width="7"/>
+    <rect x="62" y="-100" width="66" height="50" fill="#1a0e04" opacity="0.7"/>
+    <line x1="220" y1="70" x2="215" y2="-130" stroke="#1a0e04" stroke-width="8"/>
+    <rect x="170" y="-130" width="90" height="60" fill="#1a0e04" opacity="0.75"/>
+  </g>
+  <!-- Third ship far right -->
+  <g transform="translate(1550,255) scale(0.38)" opacity="0.4">
+    <path d="M0,80 Q10,110 80,120 Q200,130 320,115 Q380,108 390,80 Q300,60 200,55 Q80,58 0,80Z" fill="#1a0e04"/>
+    <line x1="220" y1="70" x2="215" y2="-130" stroke="#1a0e04" stroke-width="8"/>
+    <rect x="170" y="-130" width="90" height="60" fill="#1a0e04" opacity="0.75"/>
+  </g>
+  <rect width="1920" height="400" fill="url(#fade)"/>
+</svg>

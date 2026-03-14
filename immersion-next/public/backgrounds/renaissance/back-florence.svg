@@ -1,0 +1,47 @@
+<svg viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>
+  <!-- Tuscan hills -->
+  <ellipse cx="300" cy="450" rx="500" ry="160" fill="#1c0a0e" opacity="0.6"/>
+  <ellipse cx="1600" cy="460" rx="550" ry="150" fill="#1c0a0e" opacity="0.55"/>
+  <!-- Florence Duomo (Brunelleschi dome) -->
+  <g transform="translate(720,100)" opacity="0.9">
+    <!-- Nave -->
+    <rect x="0" y="180" width="400" height="120" fill="#1c0a0e"/>
+    <!-- Drum -->
+    <rect x="150" y="100" width="100" height="80" fill="#1c0a0e"/>
+    <!-- Dome -->
+    <path d="M140,100 Q200,-20 260,100Z" fill="#1c0a0e"/>
+    <!-- Lantern -->
+    <rect x="192" y="-28" width="16" height="30" fill="#1c0a0e"/>
+    <!-- Bell tower (Giotto's Campanile) -->
+    <rect x="420" y="60" width="55" height="240" fill="#1c0a0e"/>
+    <!-- Tower top -->
+    <rect x="415" y="45" width="65" height="20" fill="#1c0a0e"/>
+    <polygon points="415,45 447,5 480,45" fill="#1c0a0e"/>
+    <!-- Arched windows on tower -->
+    <path d="M430,100 Q447,85 464,100Z" fill="#100507"/>
+    <path d="M430,145 Q447,130 464,145Z" fill="#100507"/>
+    <path d="M430,190 Q447,175 464,190Z" fill="#100507"/>
+  </g>
+  <!-- City buildings left -->
+  <g fill="#1c0a0e" opacity="0.7">
+    <rect x="100" y="260" width="80" height="140"/><rect x="195" y="240" width="65" height="160"/>
+    <rect x="275" y="270" width="75" height="130"/><rect x="365" y="250" width="90" height="150"/>
+    <polygon points="100,260 140,225 180,260"/><polygon points="195,240 227,205 260,240"/>
+    <polygon points="365,250 410,210 455,250"/>
+  </g>
+  <!-- City buildings right -->
+  <g fill="#1c0a0e" opacity="0.65">
+    <rect x="1350" y="255" width="85" height="145"/><rect x="1450" y="240" width="70" height="160"/>
+    <rect x="1535" y="265" width="80" height="135"/><rect x="1630" y="248" width="95" height="152"/>
+    <rect x="1740" y="270" width="75" height="130"/>
+    <polygon points="1350,255 1392,215 1435,255"/><polygon points="1450,240 1485,202 1520,240"/>
+    <polygon points="1630,248 1677,205 1725,248"/>
+  </g>
+  <rect width="1920" height="400" fill="url(#fade)"/>
+</svg>

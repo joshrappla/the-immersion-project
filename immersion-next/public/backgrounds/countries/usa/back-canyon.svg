@@ -1,0 +1,26 @@
+<svg viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>
+  <!-- Canyon walls — flat-topped mesas with sheer cliff faces -->
+  <!-- Left canyon wall -->
+  <path d="M0,0 L0,300 Q80,280 160,320 Q200,340 240,310 L240,0Z" fill="#2a0e04" opacity="0.88"/>
+  <!-- Left mesa step -->
+  <path d="M240,310 Q280,290 320,310 Q360,330 400,300 L400,0 L240,0Z" fill="#1e0b03" opacity="0.82"/>
+  <!-- Center canyon vista -->
+  <path d="M400,300 Q480,260 560,290 Q640,320 720,270 Q760,250 800,280 L800,400 L400,400Z" fill="#2a0e04" opacity="0.6"/>
+  <!-- Right canyon wall -->
+  <path d="M1520,0 L1920,0 L1920,300 Q1840,280 1760,320 Q1720,340 1680,305 L1680,0Z" fill="#2a0e04" opacity="0.88"/>
+  <path d="M1520,310 Q1480,290 1440,310 Q1400,330 1360,300 L1360,0 L1520,0Z" fill="#1e0b03" opacity="0.82"/>
+  <!-- Butte / mesa center background -->
+  <path d="M750,120 L750,280 Q810,265 870,280 L870,120Z" fill="#1a0a02" opacity="0.7"/>
+  <rect x="745" y="105" width="130" height="18" fill="#1a0a02" opacity="0.7"/>
+  <path d="M1050,150 L1050,290 Q1110,272 1170,290 L1170,150Z" fill="#1a0a02" opacity="0.65"/>
+  <rect x="1045" y="136" width="130" height="18" fill="#1a0a02" opacity="0.65"/>
+  <!-- Far distant mesa -->
+  <path d="M870,180 Q960,160 1050,180 L1050,290 Q960,280 870,290Z" fill="#150802" opacity="0.5"/>
+  <rect width="1920" height="400" fill="url(#fade)"/>
+</svg>

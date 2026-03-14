@@ -1,0 +1,25 @@
+<svg viewBox="0 0 1920 160" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <!-- Sand dunes -->
+  <path d="M0,90 Q160,55 320,80 Q480,105 640,70 Q800,38 960,72 Q1120,105 1280,68 Q1440,35 1600,72 Q1760,105 1920,78 L1920,160 L0,160Z" fill="#2a1403" opacity="0.9"/>
+  <!-- Second dune layer -->
+  <path d="M0,115 Q120,95 240,108 Q360,120 480,100 Q600,80 720,105 Q840,128 960,102 Q1080,78 1200,108 Q1320,135 1440,105 Q1560,78 1680,108 Q1800,135 1920,110 L1920,160 L0,160Z" fill="#200f02" opacity="0.85"/>
+  <!-- Small desert rocks -->
+  <ellipse cx="350" cy="98" rx="20" ry="8" fill="#1a0d02" opacity="0.7"/>
+  <ellipse cx="900" cy="88" rx="16" ry="6" fill="#1a0d02" opacity="0.65"/>
+  <ellipse cx="1450" cy="100" rx="22" ry="9" fill="#1a0d02" opacity="0.7"/>
+  <ellipse cx="1800" cy="95" rx="14" ry="5" fill="#1a0d02" opacity="0.6"/>
+  <!-- Palm tree silhouettes -->
+  <g fill="#1a0d02" opacity="0.7">
+    <line x1="150" y1="90" x2="145" y2="30" stroke="#1a0d02" stroke-width="5"/>
+    <path d="M145,30 Q120,15 100,25 Q125,30 135,42Z" fill="#1a0d02"/>
+    <path d="M145,30 Q130,8 148,0 Q150,18 148,32Z" fill="#1a0d02"/>
+    <path d="M145,30 Q165,12 175,22 Q160,32 148,36Z" fill="#1a0d02"/>
+    <path d="M145,30 Q155,10 170,18 Q158,30 148,35Z" fill="#1a0d02"/>
+  </g>
+  <g fill="#1a0d02" opacity="0.65" transform="translate(1650,0)">
+    <line x1="150" y1="88" x2="155" y2="28" stroke="#1a0d02" stroke-width="5"/>
+    <path d="M155,28 Q130,13 110,23 Q135,28 145,40Z" fill="#1a0d02"/>
+    <path d="M155,28 Q140,6 158,0 Q160,18 158,30Z" fill="#1a0d02"/>
+    <path d="M155,28 Q175,10 185,20 Q170,30 158,34Z" fill="#1a0d02"/>
+  </g>
+</svg>

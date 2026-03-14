@@ -1,0 +1,50 @@
+<svg viewBox="0 0 1920 260" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+  <!-- Port warehouses and dock buildings -->
+  <g fill="#1a0e04" opacity="0.88">
+    <!-- Dock buildings left cluster -->
+    <rect x="0" y="140" width="110" height="120"/>
+    <polygon points="0,140 55,100 110,140"/>
+    <rect x="120" y="160" width="80" height="100"/>
+    <polygon points="110,160 160,125 210,160"/>
+    <rect x="210" y="130" width="130" height="130"/>
+    <polygon points="200,130 265,85 340,130"/>
+    <!-- Lighthouse -->
+    <polygon points="370,260 382,80 394,260" fill="#1a0e04" opacity="0.9"/>
+    <ellipse cx="382" cy="80" rx="18" ry="14" fill="#1a0e04" opacity="0.9"/>
+    <rect x="372" y="66" width="20" height="16" fill="#1a0e04" opacity="0.9"/>
+    <!-- More warehouses -->
+    <rect x="420" y="150" width="100" height="110"/>
+    <polygon points="410,150 470,110 530,150"/>
+    <rect x="540" y="140" width="120" height="120"/>
+    <polygon points="530,140 600,95 670,140"/>
+    <!-- Crane arm -->
+    <rect x="700" y="80" width="12" height="180" fill="#1a0e04" opacity="0.8"/>
+    <rect x="700" y="80" width="80" height="10" fill="#1a0e04" opacity="0.8"/>
+    <line x1="780" y1="80" x2="760" y2="180" stroke="#1a0e04" stroke-width="4" opacity="0.7"/>
+    <!-- Warehouses right -->
+    <rect x="850" y="155" width="110" height="105"/>
+    <polygon points="840,155 905,112 970,155"/>
+    <rect x="980" y="145" width="130" height="115"/>
+    <polygon points="970,145 1045,100 1120,145"/>
+    <rect x="1130" y="165" width="100" height="95"/>
+    <rect x="1240" y="140" width="150" height="120"/>
+    <polygon points="1230,140 1315,90 1400,140"/>
+    <rect x="1410" y="160" width="110" height="100"/>
+    <polygon points="1400,160 1465,118 1530,160"/>
+    <rect x="1540" y="150" width="130" height="110"/>
+    <rect x="1680" y="165" width="100" height="95"/>
+    <rect x="1790" y="145" width="130" height="115"/>
+  </g>
+  <!-- Dock pilings -->
+  <g fill="#1a0e04" opacity="0.6">
+    <rect x="750" y="210" width="12" height="50"/><rect x="775" y="215" width="12" height="45"/>
+    <rect x="800" y="208" width="12" height="52"/><rect x="825" y="212" width="12" height="48"/>
+  </g>
+  <rect width="1920" height="260" fill="url(#fade)"/>
+</svg>

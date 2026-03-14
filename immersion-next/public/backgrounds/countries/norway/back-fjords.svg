@@ -1,0 +1,36 @@
+<svg viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.7"/>
+    </linearGradient>
+    <linearGradient id="aurora" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00ffe0" stop-opacity="0.08"/>
+      <stop offset="40%" stop-color="#00c3a0" stop-opacity="0.12"/>
+      <stop offset="70%" stop-color="#6600ff" stop-opacity="0.09"/>
+      <stop offset="100%" stop-color="#00ffe0" stop-opacity="0.06"/>
+    </linearGradient>
+  </defs>
+  <!-- Aurora suggestion in sky -->
+  <ellipse cx="960" cy="80" rx="1000" ry="120" fill="url(#aurora)" opacity="0.8"/>
+  <!-- Dramatic fjord cliff walls -->
+  <!-- Left cliff -->
+  <path d="M0,0 L0,400 L350,400 Q300,350 280,280 Q260,200 290,140 Q320,80 380,40 Q420,15 460,20 L460,0Z" fill="#0a1a28" opacity="0.92"/>
+  <!-- Left cliff snow cap -->
+  <path d="M380,40 Q420,15 460,20 Q440,55 400,70Z" fill="#a8c5d8" opacity="0.35"/>
+  <!-- Right cliff -->
+  <path d="M1920,0 L1460,0 Q1500,15 1540,40 Q1600,80 1630,140 Q1660,200 1640,280 Q1620,350 1570,400 L1920,400Z" fill="#0a1a28" opacity="0.92"/>
+  <!-- Right cliff snow cap -->
+  <path d="M1540,40 Q1500,15 1460,0 Q1480,55 1520,70Z" fill="#a8c5d8" opacity="0.35"/>
+  <!-- Fjord water between cliffs -->
+  <path d="M350,400 Q600,360 960,350 Q1320,360 1570,400Z" fill="#05101e" opacity="0.85"/>
+  <!-- Fjord water reflections (wavy lines) -->
+  <g stroke="#0d2035" stroke-width="2" fill="none" opacity="0.6">
+    <path d="M400,380 Q600,370 800,375 Q960,380 1120,375 Q1320,370 1520,380"/>
+    <path d="M450,390 Q650,382 850,386 Q960,390 1070,386 Q1270,382 1470,390"/>
+  </g>
+  <!-- Waterfall suggestion (left cliff) -->
+  <path d="M310,160 Q312,200 315,240 Q317,270 315,300" stroke="#a8c5d8" stroke-width="4" fill="none" opacity="0.3"/>
+  <path d="M320,170 Q322,210 325,255 Q327,285 324,315" stroke="#a8c5d8" stroke-width="3" fill="none" opacity="0.2"/>
+  <rect width="1920" height="400" fill="url(#fade)"/>
+</svg>

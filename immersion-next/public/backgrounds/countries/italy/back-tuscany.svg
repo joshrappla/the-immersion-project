@@ -1,0 +1,39 @@
+<svg viewBox="0 0 1920 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>
+  <!-- Rolling Tuscan hills -->
+  <path d="M0,280 Q120,220 240,250 Q360,280 480,240 Q600,200 720,240 Q840,280 960,230 Q1080,180 1200,230 Q1320,280 1440,240 Q1560,200 1680,245 Q1800,290 1920,255 L1920,400 L0,400Z" fill="#1c0a06" opacity="0.72"/>
+  <path d="M0,320 Q150,290 300,310 Q450,330 600,295 Q750,260 900,295 Q1050,330 1200,295 Q1350,260 1500,295 Q1650,330 1800,305 Q1870,295 1920,310 L1920,400 L0,400Z" fill="#150805" opacity="0.85"/>
+  <!-- Farmhouse on hilltop (center-left) -->
+  <g fill="#150805" opacity="0.8" transform="translate(580,205)">
+    <rect x="0" y="30" width="80" height="55"/>
+    <polygon points="-5,30 40,0 85,30"/>
+    <!-- Tower addition -->
+    <rect x="70" y="0" width="30" height="65"/>
+    <polygon points="65,0 85,-20 105,0"/>
+  </g>
+  <!-- Farmhouse 2 (right side) -->
+  <g fill="#150805" opacity="0.65" transform="translate(1300,220)">
+    <rect x="0" y="25" width="70" height="50"/>
+    <polygon points="-4,25 35,0 74,25"/>
+    <rect x="60" y="5" width="24" height="55"/>
+    <polygon points="56,5 72,-14 88,5"/>
+  </g>
+  <!-- Cypress trees scattered on hills -->
+  <g fill="#150805" opacity="0.75">
+    <!-- Cypress = tall narrow oval/pointed shape -->
+    <ellipse cx="420" cy="235" rx="10" ry="42"/><ellipse cx="435" cy="237" rx="9" ry="38"/>
+    <ellipse cx="760" cy="222" rx="10" ry="44"/><ellipse cx="775" cy="224" rx="9" ry="40"/>
+    <ellipse cx="1100" cy="215" rx="10" ry="46"/><ellipse cx="1115" cy="217" rx="9" ry="42"/>
+    <ellipse cx="1550" cy="225" rx="10" ry="42"/><ellipse cx="1565" cy="227" rx="9" ry="38"/>
+    <!-- Row of cypress near farmhouse -->
+    <ellipse cx="660" cy="230" rx="8" ry="36"/>
+    <ellipse cx="673" cy="231" rx="8" ry="34"/>
+    <ellipse cx="686" cy="232" rx="8" ry="32"/>
+  </g>
+  <rect width="1920" height="400" fill="url(#fade)"/>
+</svg>

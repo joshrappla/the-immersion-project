@@ -6,6 +6,7 @@ import { COUNTRY_OPTIONS, getCountryName } from '@/lib/countries';
 import ParallaxBackground from '@/components/ParallaxBackground';
 import EraIndicator from '@/components/EraIndicator';
 import { useTimelineScroll } from '@/hooks/useTimelineScroll';
+import CountryZoomView from '@/components/CountryZoomView';
 
 interface MediaItem {
   mediaId: string;
@@ -37,7 +38,9 @@ export default function VerticalTimeline() {
   const [contributeTab, setContributeTab] = useState<'media' | 'feedback'>('media');
   const [timelineScale, setTimelineScale] = useState(1);
   const [countryFilter, setCountryFilter] = useState<string[]>([]);
+  const [zoomCountry, setZoomCountry] = useState<string | null>(null);
   const [musicOn, setMusicOn] = useState(false);
+  const [particlesEnabled, setParticlesEnabled] = useState(true);
   const pinchStartRef = useRef<{ distance: number; scale: number } | null>(null);
   const timelineContainerRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -66,6 +69,8 @@ export default function VerticalTimeline() {
   useEffect(() => {
     setMounted(true);
     fetchMediaItems();
+    const stored = localStorage.getItem('particlesEnabled');
+    if (stored !== null) setParticlesEnabled(stored !== 'false');
   }, []);
 
   // Background music — place your audio file at /public/music/background.mp3
@@ -79,6 +84,14 @@ export default function VerticalTimeline() {
       audioRef.current = null;
     };
   }, []);
+
+  const toggleParticles = () => {
+    setParticlesEnabled(prev => {
+      const next = !prev;
+      localStorage.setItem('particlesEnabled', String(next));
+      return next;
+    });
+  };
 
   const toggleMusic = () => {
     const audio = audioRef.current;
@@ -234,11 +247,26 @@ export default function VerticalTimeline() {
 
   return (
     <div className="relative min-h-screen bg-black overflow-x-hidden">
+      {/* Country Zoom View — full-screen overlay */}
+      {zoomCountry && mounted && (
+        <CountryZoomView
+          countryCode={zoomCountry}
+          allMediaItems={mediaItems}
+          particlesEnabled={particlesEnabled}
+          onClose={() => setZoomCountry(null)}
+          onCountrySwitch={(code) => {
+            setZoomCountry(code);
+            setCountryFilter([code]);
+          }}
+        />
+      )}
+
       {/* Parallax Era Background */}
       <ParallaxBackground
         scrollOffset={scrollOffset}
         currentEra={currentEra}
         mode="vertical"
+        particlesEnabled={particlesEnabled}
       />
 
       {/* Era Indicator (bottom-left floating badge) */}
@@ -349,6 +377,21 @@ export default function VerticalTimeline() {
                 <span className="font-semibold">{musicOn ? 'Music On' : 'Music Off'}</span>
               </button>
 
+              {/* FX Toggle */}
+              <button
+                onClick={toggleParticles}
+                className={`flex items-center gap-3 w-full p-4 rounded-lg border transition ${
+                  particlesEnabled
+                    ? 'bg-teal-900/60 text-teal-300 border-teal-700 hover:bg-teal-900'
+                    : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700'
+                }`}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+                <span className="font-semibold">FX {particlesEnabled ? 'On' : 'Off'}</span>
+              </button>
+
               {/* Filters */}
               <div className="space-y-3">
                 <label className="block">
@@ -392,16 +435,25 @@ export default function VerticalTimeline() {
                   {countryFilter.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-2">
                       {countryFilter.map(code => (
-                        <span key={code} className="flex items-center gap-1 px-2 py-1 bg-teal-900/60 text-teal-300 rounded-full text-xs border border-teal-700">
+                        <span key={code} className="flex items-center gap-1 pl-2 pr-1 py-1 bg-teal-900/60 text-teal-300 rounded-full text-xs border border-teal-700">
                           {getCountryName(code)}
-                          <button onClick={() => setCountryFilter(prev => prev.filter(c => c !== code))} className="hover:text-white">✕</button>
+                          <button onClick={() => { setZoomCountry(code); setMobileMenuOpen(false); }} title="Zoom into country" className="hover:text-white px-1">🔍</button>
+                          <button onClick={() => setCountryFilter(prev => prev.filter(c => c !== code))} className="hover:text-white pr-1">✕</button>
                         </span>
                       ))}
                     </div>
                   )}
                   <select
                     value=""
-                    onChange={(e) => { if (e.target.value) setCountryFilter(prev => [...prev, e.target.value]); }}
+                    onChange={(e) => {
+                      const code = e.target.value;
+                      if (!code) return;
+                      setCountryFilter(prev => {
+                        const next = [...prev, code];
+                        if (prev.length === 0) { setZoomCountry(code); setMobileMenuOpen(false); }
+                        return next;
+                      });
+                    }}
                     className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg text-base border border-gray-700"
                   >
                     <option value="">{countryFilter.length ? '+ Add country…' : 'All Countries'}</option>
