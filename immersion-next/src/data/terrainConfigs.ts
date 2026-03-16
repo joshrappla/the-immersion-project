@@ -319,7 +319,7 @@ export const COUNTRY_TERRAINS: Record<string, TerrainConfig> = {
       water:    '#4080b0',
       lowland:  '#70a050',
       midland:  '#90a060',
-      highland: '#9070558',
+      highland: '#907055',
       peak:     '#f0ece8',
     },
     atmosphere: {
