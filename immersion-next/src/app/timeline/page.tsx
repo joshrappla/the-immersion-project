@@ -1,26 +1,86 @@
 'use client';
 
-import dynamic from 'next/dynamic';
+import dynamic  from 'next/dynamic';
 import { useState, useEffect, useCallback } from 'react';
 import HorizontalTimeline from '@/components/HorizontalTimeline';
 import MediaDetailModal   from '@/components/ImmersiveTimeline/MediaDetailModal';
-import type { MediaItem }  from '@/types/media';
+import MobileTimeline     from '@/components/ImmersiveTimeline/MobileTimeline';
+import LoadingScreen      from '@/components/ImmersiveTimeline/LoadingScreen';
+import type { MediaItem } from '@/types/media';
 
-// Three.js scene — no SSR
+// Three.js scene — client-only, no SSR
 const ImmersiveScene = dynamic(
   () => import('@/components/ImmersiveTimeline/ImmersiveScene'),
   { ssr: false }
 );
 
+/** Detect whether the device / browser can run a WebGL 3D scene well. */
+function checkIsLowPerf(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  // Touch-first viewport → treat as mobile
+  if (window.innerWidth < 768) return true;
+
+  // No WebGL support
+  try {
+    const c = document.createElement('canvas');
+    if (!c.getContext('webgl') && !c.getContext('experimental-webgl')) return true;
+  } catch {
+    return true;
+  }
+
+  // Very low CPU core count
+  if (typeof navigator !== 'undefined' && navigator.hardwareConcurrency != null
+      && navigator.hardwareConcurrency <= 2) return true;
+
+  return false;
+}
+
 export default function TimelinePage() {
   const [immersiveMode,   setImmersiveMode]   = useState(false);
+  const [useMobile,       setUseMobile]       = useState(false);
+  const [deviceChecked,   setDeviceChecked]   = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedEra,     setSelectedEra]     = useState<string | null>(null);
   const [mediaItems,      setMediaItems]      = useState<MediaItem[]>([]);
   const [selectedMedia,   setSelectedMedia]   = useState<MediaItem | null>(null);
   const [isFetching,      setIsFetching]      = useState(false);
 
-  // Fetch filtered media whenever country/era selection changes while in immersive mode
+  // ── Device detection + URL param read (client only) ──────────────────────
+  useEffect(() => {
+    // Check capabilities
+    setUseMobile(checkIsLowPerf());
+    setDeviceChecked(true);
+
+    // Re-check on resize
+    const onResize = () => setUseMobile(checkIsLowPerf());
+    window.addEventListener('resize', onResize);
+
+    // Read URL params for deep-linking: /timeline?country=JP or ?era=medieval
+    const params = new URLSearchParams(window.location.search);
+    const country = params.get('country');
+    const era     = params.get('era');
+    if (country || era) {
+      if (country) setSelectedCountry(country);
+      if (era)     setSelectedEra(era);
+      setImmersiveMode(true);
+    }
+
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // ── Write URL when selection changes ─────────────────────────────────────
+  useEffect(() => {
+    if (!deviceChecked) return;
+    const params = new URLSearchParams();
+    if (selectedCountry) params.set('country', selectedCountry);
+    if (selectedEra)     params.set('era',     selectedEra);
+    const qs  = params.toString();
+    const url = qs ? `/timeline?${qs}` : '/timeline';
+    window.history.replaceState(null, '', url);
+  }, [selectedCountry, selectedEra, deviceChecked]);
+
+  // ── Fetch media when in immersive mode and a country/era is selected ──────
   useEffect(() => {
     if (!immersiveMode) return;
     if (!selectedCountry && !selectedEra) {
@@ -40,13 +100,10 @@ export default function TimelinePage() {
         const res = await fetch(`/api/media?${params}`, {
           signal: AbortSignal.timeout(12_000),
         });
-
         if (!res.ok) throw new Error(`API ${res.status}`);
-        const data = await res.json();
 
-        // Normalise different response shapes
-        const items: MediaItem[] = Array.isArray(data)
-          ? data
+        const data = await res.json();
+        const items: MediaItem[] = Array.isArray(data)           ? data
           : Array.isArray(data.items)   ? data.items
           : Array.isArray(data.media)   ? data.media
           : Array.isArray(data.results) ? data.results
@@ -64,7 +121,6 @@ export default function TimelinePage() {
     return () => { cancelled = true; };
   }, [immersiveMode, selectedCountry, selectedEra]);
 
-  // When exiting immersive mode, clear selection state
   const handleExit = useCallback(() => {
     setImmersiveMode(false);
     setSelectedCountry(null);
@@ -72,16 +128,42 @@ export default function TimelinePage() {
     setMediaItems([]);
   }, []);
 
-  const handleMediaSelect = useCallback((item: MediaItem) => {
-    setSelectedMedia(item);
-  }, []);
+  const handleMediaSelect  = useCallback((item: MediaItem) => setSelectedMedia(item), []);
+  const handleCloseMedia   = useCallback(() => setSelectedMedia(null), []);
 
+  // ── Render ────────────────────────────────────────────────────────────────
+
+  // Waiting for client device check
+  if (!deviceChecked && immersiveMode) {
+    return <LoadingScreen message="Detecting device capabilities" />;
+  }
+
+  // ── Immersive mode: mobile / low-perf fallback ────────────────────────────
+  if (immersiveMode && useMobile) {
+    return (
+      <>
+        <MobileTimeline
+          mediaItems={mediaItems}
+          selectedCountry={selectedCountry}
+          selectedEra={selectedEra}
+          onSelectCountry={setSelectedCountry}
+          onSelectEra={setSelectedEra}
+          onMediaSelect={handleMediaSelect}
+          onExitMobile={handleExit}
+        />
+        {selectedMedia && (
+          <MediaDetailModal item={selectedMedia} onClose={handleCloseMedia} />
+        )}
+      </>
+    );
+  }
+
+  // ── Standard page (desktop) ───────────────────────────────────────────────
   return (
     <>
-      {/* Standard 2D timeline always present in the background */}
       <HorizontalTimeline />
 
-      {/* 3D Explore FAB button (hidden while in immersive mode) */}
+      {/* 3D Explore FAB */}
       {!immersiveMode && (
         <button
           onClick={() => setImmersiveMode(true)}
@@ -96,11 +178,11 @@ export default function TimelinePage() {
           title="Enter immersive 3D mode"
         >
           <span className="text-base">🌌</span>
-          <span>3D Explore</span>
+          <span>{useMobile ? '📱 Mobile View' : '3D Explore'}</span>
         </button>
       )}
 
-      {/* Full-screen immersive R3F scene */}
+      {/* Immersive overlay */}
       {immersiveMode && (
         <ImmersiveScene
           onExit={handleExit}
@@ -109,23 +191,18 @@ export default function TimelinePage() {
         />
       )}
 
-      {/* Subtle fetching indicator (shown inside 3D mode) */}
+      {/* Fetching indicator (inside immersive mode) */}
       {immersiveMode && isFetching && (
-        <div
-          className="fixed top-16 left-1/2 -translate-x-1/2 z-[55]
-                     px-4 py-1.5 rounded-full text-xs font-medium
-                     bg-black/60 backdrop-blur border border-white/10 text-blue-300/70"
-        >
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[55]
+                        px-4 py-1.5 rounded-full text-xs font-medium
+                        bg-black/60 backdrop-blur border border-white/10 text-blue-300/70">
           Loading media nodes…
         </div>
       )}
 
       {/* Media detail modal */}
       {selectedMedia && (
-        <MediaDetailModal
-          item={selectedMedia}
-          onClose={() => setSelectedMedia(null)}
-        />
+        <MediaDetailModal item={selectedMedia} onClose={handleCloseMedia} />
       )}
     </>
   );

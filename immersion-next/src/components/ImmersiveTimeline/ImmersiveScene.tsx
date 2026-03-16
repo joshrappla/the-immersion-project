@@ -1,18 +1,21 @@
 'use client';
 
-import { Suspense, useState, useCallback } from 'react';
-import { Canvas }          from '@react-three/fiber';
-import { OrbitControls }   from '@react-three/drei';
+import { Suspense, useState, useCallback, useEffect } from 'react';
+import { Canvas }        from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 
-import DuskSky           from './DuskSky';
-import StarField         from './StarField';
-import CloudLayer        from './CloudLayer';
-import CameraController  from './CameraController';
-import TerrainMap        from './TerrainMap';
-import MediaNodes        from './MediaNodes';
-import SelectionOverlay  from './SelectionOverlay';
-import LoadingScreen     from './LoadingScreen';
+import DuskSky          from './DuskSky';
+import StarField        from './StarField';
+import CloudLayer       from './CloudLayer';
+import CameraController from './CameraController';
+import TerrainMap       from './TerrainMap';
+import MediaNodes       from './MediaNodes';
+import SelectionOverlay from './SelectionOverlay';
+import LoadingScreen    from './LoadingScreen';
+import NavigationUI     from './NavigationUI';
+import HelpTooltips     from './HelpTooltips';
+import AmbientAudio     from './AmbientAudio';
 import type { MediaItem } from '@/types/media';
 
 interface ImmersiveSceneProps {
@@ -24,14 +27,9 @@ interface ImmersiveSceneProps {
 
 type Phase = 'sky' | 'descending' | 'landed';
 
-// ── Scene inner (rendered inside Canvas) ─────────────────────────────────────
+// ── 3D scene content (inside Canvas) ──────────────────────────────────────────
 function SceneContent({
-  phase,
-  selectedCountry,
-  selectedEra,
-  mediaItems,
-  onLanded,
-  onMediaSelect,
+  phase, selectedCountry, selectedEra, mediaItems, onLanded, onMediaSelect,
 }: {
   phase:           Phase;
   selectedCountry: string | null;
@@ -40,8 +38,6 @@ function SceneContent({
   onLanded:        () => void;
   onMediaSelect:   (item: MediaItem) => void;
 }) {
-  const terrainVisible = phase === 'landed';
-
   return (
     <>
       <DuskSky />
@@ -51,13 +47,8 @@ function SceneContent({
         <CloudLayer altitude={55} opacity={0.18} count={24} driftSpeed={0.35} />
       )}
 
-      <TerrainMap
-        visible={terrainVisible}
-        country={selectedCountry}
-        era={selectedEra}
-      />
+      <TerrainMap visible={phase === 'landed'} country={selectedCountry} era={selectedEra} />
 
-      {/* Media nodes — only once terrain is fully shown */}
       {phase === 'landed' && mediaItems.length > 0 && (
         <MediaNodes
           items={mediaItems}
@@ -67,7 +58,7 @@ function SceneContent({
         />
       )}
 
-      {/* Sky/descent lighting */}
+      {/* Sky / descent lighting */}
       {phase !== 'landed' && (
         <>
           <ambientLight intensity={0.15} />
@@ -104,8 +95,9 @@ function SceneContent({
   );
 }
 
-// ── Connection type legend ─────────────────────────────────────────────────
-function ConnectionLegend() {
+// ── Connection legend ──────────────────────────────────────────────────────────
+function ConnectionLegend({ visible }: { visible: boolean }) {
+  if (!visible) return null;
   return (
     <div style={{
       position: 'fixed', bottom: 88, left: 16, zIndex: 30,
@@ -160,20 +152,41 @@ export default function ImmersiveScene({
     setPhase('descending');
   }, []);
 
-  const handleLanded      = useCallback(() => setPhase('landed'), []);
+  const handleLanded = useCallback(() => setPhase('landed'), []);
+
   const handleReturnToSky = useCallback(() => {
     setSelectedCountry(null);
     setSelectedEra(null);
     setPhase('sky');
   }, []);
 
+  // ESC key: return to sky or exit
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (phase === 'landed' || phase === 'descending') {
+        handleReturnToSky();
+      } else {
+        onExit();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [phase, handleReturnToSky, onExit]);
+
   return (
     <div className="fixed inset-0 z-50 bg-[#020510]">
       {!isLoaded && <LoadingScreen />}
 
+      {/* ── Three.js canvas ── */}
       <Canvas
         camera={{ fov: 60, near: 0.5, far: 1000, position: [0, 350, 0] }}
-        gl={{ antialias: true, alpha: false }}
+        gl={{
+          antialias:         true,
+          alpha:             false,
+          powerPreference:   'high-performance',
+          preserveDrawingBuffer: false,
+        }}
         shadows
         dpr={[1, 1.5]}
         onCreated={() => setIsLoaded(true)}
@@ -191,21 +204,36 @@ export default function ImmersiveScene({
         </Suspense>
       </Canvas>
 
+      {/* ── HTML overlays ── */}
       {isLoaded && (
-        <SelectionOverlay
-          phase={phase}
-          selectedCountry={selectedCountry}
-          selectedEra={selectedEra}
-          onSelectCountry={handleSelectCountry}
-          onSelectEra={handleSelectEra}
-          onReturnToSky={handleReturnToSky}
-          onExitImmersive={onExit}
-        />
-      )}
+        <>
+          <SelectionOverlay
+            phase={phase}
+            selectedCountry={selectedCountry}
+            selectedEra={selectedEra}
+            onSelectCountry={handleSelectCountry}
+            onSelectEra={handleSelectEra}
+            onReturnToSky={handleReturnToSky}
+            onExitImmersive={onExit}
+          />
 
-      {/* Connection legend — only visible in terrain view with nodes */}
-      {phase === 'landed' && mediaItems.length > 0 && (
-        <ConnectionLegend />
+          {/* Media stats panel — top-left below country badge */}
+          <NavigationUI
+            phase={phase}
+            selectedCountry={selectedCountry}
+            selectedEra={selectedEra}
+            mediaItems={mediaItems}
+          />
+
+          {/* Auto-dismiss hint bar */}
+          <HelpTooltips phase={phase} />
+
+          {/* Sound toggle */}
+          <AmbientAudio phase={phase} country={selectedCountry} />
+
+          {/* Connection legend */}
+          <ConnectionLegend visible={phase === 'landed' && mediaItems.length > 0} />
+        </>
       )}
     </div>
   );

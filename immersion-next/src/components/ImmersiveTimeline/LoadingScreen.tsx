@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react';
 
-export default function LoadingScreen() {
+interface LoadingScreenProps {
+  message?: string;
+}
+
+export default function LoadingScreen({ message }: LoadingScreenProps = {}) {
   const [dots, setDots] = useState('');
 
   useEffect(() => {
@@ -37,10 +41,10 @@ export default function LoadingScreen() {
         </div>
 
         <h2 className="text-white text-2xl font-bold mb-2 tracking-wide">
-          Preparing Your Journey
+          {message ?? 'Preparing Your Journey'}
         </h2>
         <p className="text-blue-300/70 text-sm mb-6">
-          Loading immersive 3D environment{dots}
+          {message ? `${dots}` : `Loading immersive 3D environment${dots}`}
         </p>
 
         {/* Progress bar */}
