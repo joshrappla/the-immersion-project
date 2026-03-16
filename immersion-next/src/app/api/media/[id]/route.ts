@@ -115,18 +115,22 @@ export async function PUT(
   }
 
   // ── Attempt 2: fallback — strip extended fields if Lambda rejects them ────
-  // A 400 from the Lambda typically means it doesn't recognise the new fields.
+  // A 400 or 403 from the Lambda typically means the deployed version doesn't
+  // recognise the new fields (countryCodes, inferenceSource, etc.).
   // We retry with only the base field set so the save still succeeds.
-  if (res.status === 400) {
+  // Once the updated lambda/mediaHandler.js is deployed to AWS, this branch
+  // is never triggered and all fields are persisted.
+  if (res.status === 400 || res.status === 403) {
     const droppedFields = EXTENDED_FIELDS.filter((f) => f in body);
 
     if (droppedFields.length > 0) {
       console.warn(
-        '[api/media/[id]] Lambda rejected extended fields — falling back to base fields.',
+        `[api/media/[id]] Lambda returned ${res.status} — falling back to base fields (extended fields dropped).`,
         {
           mediaId,
+          lambdaStatus: res.status,
           droppedFields,
-          hint: 'Deploy the updated lambda/mediaHandler.js to persist these fields in DynamoDB.',
+          hint: 'Deploy the updated lambda/mediaHandler.js to persist countryCodes and other extended fields in DynamoDB.',
         }
       );
 
