@@ -10,12 +10,16 @@ import StarField         from './StarField';
 import CloudLayer        from './CloudLayer';
 import CameraController  from './CameraController';
 import TerrainMap        from './TerrainMap';
+import MediaNodes        from './MediaNodes';
 import SelectionOverlay  from './SelectionOverlay';
 import LoadingScreen     from './LoadingScreen';
+import type { MediaItem } from '@/types/media';
 
 interface ImmersiveSceneProps {
-  onExit: () => void;
+  onExit:          () => void;
   initialCountry?: string | null;
+  mediaItems?:     MediaItem[];
+  onMediaSelect?:  (item: MediaItem) => void;
 }
 
 type Phase = 'sky' | 'descending' | 'landed';
@@ -25,35 +29,45 @@ function SceneContent({
   phase,
   selectedCountry,
   selectedEra,
+  mediaItems,
   onLanded,
+  onMediaSelect,
 }: {
-  phase: Phase;
+  phase:           Phase;
   selectedCountry: string | null;
-  selectedEra: string | null;
-  onLanded: () => void;
+  selectedEra:     string | null;
+  mediaItems:      MediaItem[];
+  onLanded:        () => void;
+  onMediaSelect:   (item: MediaItem) => void;
 }) {
-  const showTerrain = phase === 'descending' || phase === 'landed';
-  const terrainFullyVisible = phase === 'landed';
+  const terrainVisible = phase === 'landed';
 
   return (
     <>
-      {/* Sky always present; stars fade out conceptually as we near terrain */}
       <DuskSky />
       <StarField count={2200} radius={420} twinkleSpeed={0.7} />
 
-      {/* Clouds shown in sky mode and during early descent */}
       {phase !== 'landed' && (
         <CloudLayer altitude={55} opacity={0.18} count={24} driftSpeed={0.35} />
       )}
 
-      {/* Terrain appears as camera descends and is fully visible when landed */}
       <TerrainMap
-        visible={terrainFullyVisible}
+        visible={terrainVisible}
         country={selectedCountry}
         era={selectedEra}
       />
 
-      {/* Ambient light — always on for sky scene */}
+      {/* Media nodes — only once terrain is fully shown */}
+      {phase === 'landed' && mediaItems.length > 0 && (
+        <MediaNodes
+          items={mediaItems}
+          country={selectedCountry}
+          era={selectedEra}
+          onNodeClick={onMediaSelect}
+        />
+      )}
+
+      {/* Sky/descent lighting */}
       {phase !== 'landed' && (
         <>
           <ambientLight intensity={0.15} />
@@ -61,14 +75,8 @@ function SceneContent({
         </>
       )}
 
-      {/* Camera — GSAP-animated during sky/descent; orbit controls take over when landed */}
-      <CameraController
-        selectedCountry={selectedCountry}
-        phase={phase}
-        onLanded={onLanded}
-      />
+      <CameraController selectedCountry={selectedCountry} phase={phase} onLanded={onLanded} />
 
-      {/* Orbit controls — only active after landing */}
       {phase === 'landed' && (
         <OrbitControls
           makeDefault
@@ -81,12 +89,11 @@ function SceneContent({
         />
       )}
 
-      {/* Post-processing — cinematic bloom + vignette */}
       <EffectComposer>
         <Bloom
-          luminanceThreshold={0.55}
+          luminanceThreshold={0.45}
           luminanceSmoothing={0.85}
-          intensity={phase === 'landed' ? 0.20 : 0.40}
+          intensity={phase === 'landed' ? 0.25 : 0.40}
         />
         <Vignette
           offset={0.35}
@@ -97,8 +104,45 @@ function SceneContent({
   );
 }
 
-// ── Main exported component ────────────────────────────────────────────────────
-export default function ImmersiveScene({ onExit, initialCountry = null }: ImmersiveSceneProps) {
+// ── Connection type legend ─────────────────────────────────────────────────
+function ConnectionLegend() {
+  return (
+    <div style={{
+      position: 'fixed', bottom: 88, left: 16, zIndex: 30,
+      background: 'rgba(2,4,16,0.72)', backdropFilter: 'blur(8px)',
+      borderRadius: 10, padding: '10px 14px',
+      border: '1px solid rgba(255,255,255,0.08)',
+    }}>
+      <p style={{
+        color: 'rgba(160,175,210,0.55)', fontSize: 9,
+        fontFamily: 'sans-serif', letterSpacing: '0.12em',
+        textTransform: 'uppercase', marginBottom: 7,
+      }}>
+        Connections
+      </p>
+      {[
+        { color: '#c0c8d8', label: 'Chronological' },
+        { color: '#fbbf24', label: 'Same Era'       },
+        { color: '#60a5fa', label: 'Same Region'    },
+      ].map(({ color, label }) => (
+        <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <div style={{ width: 18, height: 1.5, background: color, borderRadius: 2, flexShrink: 0 }} />
+          <span style={{ color: 'rgba(200,210,240,0.7)', fontSize: 11, fontFamily: 'sans-serif' }}>
+            {label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Main exported component ───────────────────────────────────────────────────
+export default function ImmersiveScene({
+  onExit,
+  initialCountry = null,
+  mediaItems     = [],
+  onMediaSelect  = () => {},
+}: ImmersiveSceneProps) {
   const [phase,           setPhase]           = useState<Phase>('sky');
   const [selectedCountry, setSelectedCountry] = useState<string | null>(initialCountry);
   const [selectedEra,     setSelectedEra]     = useState<string | null>(null);
@@ -116,10 +160,7 @@ export default function ImmersiveScene({ onExit, initialCountry = null }: Immers
     setPhase('descending');
   }, []);
 
-  const handleLanded = useCallback(() => {
-    setPhase('landed');
-  }, []);
-
+  const handleLanded      = useCallback(() => setPhase('landed'), []);
   const handleReturnToSky = useCallback(() => {
     setSelectedCountry(null);
     setSelectedEra(null);
@@ -130,7 +171,6 @@ export default function ImmersiveScene({ onExit, initialCountry = null }: Immers
     <div className="fixed inset-0 z-50 bg-[#020510]">
       {!isLoaded && <LoadingScreen />}
 
-      {/* Three.js canvas */}
       <Canvas
         camera={{ fov: 60, near: 0.5, far: 1000, position: [0, 350, 0] }}
         gl={{ antialias: true, alpha: false }}
@@ -144,12 +184,13 @@ export default function ImmersiveScene({ onExit, initialCountry = null }: Immers
             phase={phase}
             selectedCountry={selectedCountry}
             selectedEra={selectedEra}
+            mediaItems={mediaItems}
             onLanded={handleLanded}
+            onMediaSelect={onMediaSelect}
           />
         </Suspense>
       </Canvas>
 
-      {/* HTML overlay — outside Canvas so it can use normal DOM events */}
       {isLoaded && (
         <SelectionOverlay
           phase={phase}
@@ -160,6 +201,11 @@ export default function ImmersiveScene({ onExit, initialCountry = null }: Immers
           onReturnToSky={handleReturnToSky}
           onExitImmersive={onExit}
         />
+      )}
+
+      {/* Connection legend — only visible in terrain view with nodes */}
+      {phase === 'landed' && mediaItems.length > 0 && (
+        <ConnectionLegend />
       )}
     </div>
   );
